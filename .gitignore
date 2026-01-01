@@ -52,7 +52,6 @@ coverage/
 
 # Claude Code prompts (agents & skills)
 prompts/
-.claude/
 
 # Temporary files
 tmp/
