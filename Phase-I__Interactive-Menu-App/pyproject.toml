@@ -1,0 +1,14 @@
+# Task-ID: T005
+[project]
+name = "interactive-todo-cli"
+version = "1.0.0"
+description = "Interactive Menu-Based Todo CLI Application"
+requires-python = ">=3.11"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"

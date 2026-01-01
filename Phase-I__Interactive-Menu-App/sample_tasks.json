@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "title": "Sample Task 1",
+    "description": "This is a sample task for demonstration",
+    "status": "incomplete",
+    "priority": "high",
+    "due_date": "2026-12-31",
+    "category": "Work",
+    "notes": [
+      {
+        "text": "This is a sample note",
+        "created_at": "2026-01-01T10:00:00"
+      }
+    ],
+    "subtasks": [
+      {
+        "id": 1,
+        "title": "Subtask 1",
+        "status": "incomplete"
+      },
+      {
+        "id": 2,
+        "title": "Subtask 2",
+        "status": "complete"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Sample Task 2",
+    "description": "Another sample task",
+    "status": "complete",
+    "priority": "medium",
+    "due_date": null,
+    "category": "Personal",
+    "notes": [],
+    "subtasks": []
+  }
+]
