@@ -5,11 +5,23 @@ import platform
 import time
 from datetime import date
 from colorama import Fore, Style, init
-from .models import Task, TaskStatus, TaskPriority, TaskCategory, ColorTheme
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich.prompt import Prompt
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from .models import Task, TaskStatus, TaskPriority, TaskCategory, ColorTheme, ThemeManager
 
 
 # Initialize colorama for cross-platform color support - Task-ID: T019
 init(autoreset=True)
+
+# Create a global theme manager instance
+theme_manager = ThemeManager()
+
+# Create a Rich console instance
+console = Console()
 
 
 def clear_screen():
@@ -32,9 +44,8 @@ def display_header():
     Display application header with borders.
     Task-ID: T020
     """
-    print(Fore.CYAN + "=" * 80)
-    print(Fore.YELLOW + Style.BRIGHT + "MY TODO LIST".center(80))
-    print(Fore.CYAN + "=" * 80)
+    # Use Rich to create a beautiful header
+    console.print(Panel("🌱 [bold green]MY TODO LIST[/bold green]", expand=False, border_style="cyan"))
 
 
 def display_tasks(tasks: list[Task]):
@@ -47,71 +58,81 @@ def display_tasks(tasks: list[Task]):
     """
     clear_screen()
     display_header()
-    print()
 
     if not tasks:
-        print(Fore.YELLOW + "No tasks yet! Add your first task to get started.".center(80))
-        print()
-    else:
-        for task in tasks:
-            # Priority icon
-            priority_icon = task.priority.icon
+        console.print(Panel("[yellow]📭 No tasks yet! Add your first task to get started.[/yellow]", expand=False))
+        return
 
-            # Status icon and color
-            if task.status == TaskStatus.COMPLETE:
-                status_icon = Fore.GREEN + "✓"
-                status_text = Fore.GREEN + "Complete"
+    from rich import box
+
+    # Create a table for tasks with grid lines
+    table = Table(
+        title="📋 Your Tasks",
+        show_header=True,
+        header_style="bold magenta",
+        show_lines=True,  # This adds lines between rows
+        box=box.ROUNDED  # Using a rounded box style for better visual separation
+    )
+    table.add_column("ID", style="dim", width=5)
+    table.add_column("Priority", width=10)
+    table.add_column("Title", width=20)
+    table.add_column("Description", width=25)
+    table.add_column("Status", width=12)
+    table.add_column("Due Date", width=12)
+    table.add_column("Category", width=10)
+    table.add_column("Notes", width=8)
+    table.add_column("Subtasks", width=10)
+
+    for task in tasks:
+        # Determine status text and color
+        if task.status == TaskStatus.COMPLETE:
+            status_text = "[green]✅ Complete[/green]"
+        else:
+            if task.due_date and task.due_date < date.today():
+                status_text = "[red]❌ Overdue[/red]"
+            elif task.due_date and task.due_date == date.today():
+                status_text = "[yellow]⚠️ Due Today[/yellow]"
             else:
-                status_icon = Fore.WHITE + "○"
-                status_text = Fore.WHITE + "Incomplete"
+                status_text = "[blue]⏳ Incomplete[/blue]"
 
-            # Category badge
-            category_badge = f"[{task.category.label}]"
-            category_color = task.category.color
+        # Format due date
+        due_date_str = task.due_date.strftime("%Y-%m-%d") if task.due_date else "None"
 
-            # Display task with priority icon first
-            print(f"{priority_icon} {status_icon} [{task.id}] {Style.BRIGHT}{task.title} {category_color}{category_badge}")
-            print(f"    Status: {status_text}")
+        # Format description
+        description = task.description[:20] + "..." if len(task.description) > 20 else task.description
 
-            # Display due date if exists
-            if task.due_date:
-                due_date_str = task.due_date.strftime("%Y-%m-%d")
-                if task.due_date < date.today() and task.status == TaskStatus.INCOMPLETE:
-                    # Overdue
-                    print(f"    {Fore.RED}Overdue: {due_date_str}")
-                elif task.due_date == date.today() and task.status == TaskStatus.INCOMPLETE:
-                    # Due today
-                    print(f"    {Fore.YELLOW}Due: Today ({due_date_str})")
-                else:
-                    # Future due date
-                    print(f"    {Fore.WHITE}Due: {due_date_str}")
+        # Format notes count
+        notes_count = f"[cyan]{len(task.notes)}[/cyan]" if task.notes else "[dim]-[/dim]"
 
-            if task.description:
-                print(f"    Description: {task.description}")
-            else:
-                print(Fore.WHITE + Style.DIM + "    Description: No description")
+        # Format subtasks count
+        if task.subtasks:
+            completed_subtasks = len([s for s in task.subtasks if s.status == TaskStatus.COMPLETE])
+            total_subtasks = len(task.subtasks)
+            subtasks_count = f"[cyan]{completed_subtasks}/{total_subtasks}[/cyan]"
+        else:
+            subtasks_count = "[dim]-[/dim]"
 
-            # Show notes indicator if task has notes
-            if task.notes:
-                print(f"    {Fore.CYAN}Notes: {len(task.notes)}")
+        # Add row to table
+        table.add_row(
+            str(task.id),
+            task.priority.icon,
+            task.title,
+            description or "[italic]No description[/italic]",
+            status_text,
+            due_date_str,
+            task.category.label,
+            notes_count,
+            subtasks_count
+        )
 
-            # Show subtasks if any
-            if task.subtasks:
-                completed, total = len([s for s in task.subtasks if s.status == TaskStatus.COMPLETE]), len(task.subtasks)
-                print(f"    {Fore.MAGENTA}Subtasks: {completed}/{total} complete")
+    console.print(table)
 
-                # Show subtasks indented
-                for i, subtask in enumerate(task.subtasks):
-                    sub_status = "✓" if subtask.status == TaskStatus.COMPLETE else "○"
-                    prefix = "    ├─ " if i < len(task.subtasks) - 1 else "    └─ "
-                    print(f"    {prefix}{sub_status} {subtask.title}")
-
-            print()
-
-    # Task count
-    print(Fore.CYAN + "=" * 80)
-    print(Fore.CYAN + f"Total: {len(tasks)} task(s)")
-    print()
+    # Show completion stats
+    completed_count = len([t for t in tasks if t.status == TaskStatus.COMPLETE])
+    total_count = len(tasks)
+    if tasks:
+        completion_rate = (completed_count / total_count) * 100
+        console.print(f"\n[bold cyan]📊 Total: {total_count} task(s)[/bold cyan] | [bold green]✅ Completed: {completed_count} ({completion_rate:.1f}%)[/bold green]")
 
 
 def show_menu():
@@ -119,30 +140,36 @@ def show_menu():
     Display main menu with numbered options.
     Task-ID: T022
     """
-    print(Fore.YELLOW + Style.BRIGHT + "What would you like to do?")
-    print()
-    print("1. Add Task")
-    print("2. View Tasks")
-    print("3. Update Task")
-    print("4. Complete Task")
-    print("5. Delete Task")
-    print("6. Exit")
-    print()
-    print("--- Optional Features ---")
-    print("7. Sort by Priority")
-    print("8. Sort by Due Date")
-    print("9. Filter by Category")
-    print("10. Clear Filter")
-    print("11. Search Tasks")
-    print("12. View Statistics")
-    print("13. Complete All Tasks")
-    print("14. Delete Completed Tasks")
-    print("15. Add Note to Task")
-    print("16. Add Subtask")
-    print("17. Change Theme")
-    print("18. Export Tasks")
-    print("19. Import Tasks")
-    print()
+    # Create a beautiful menu using Rich
+    menu_text = Text()
+    menu_text.append("What would you like to do?\n\n", style="bold yellow")
+
+    # Core features
+    menu_text.append("Core Features:\n", style="bold blue")
+    menu_text.append("1. 📝 Add Task\n", style="cyan")
+    menu_text.append("2. 📋 View Tasks\n", style="cyan")
+    menu_text.append("3. ✏️  Update Task\n", style="cyan")
+    menu_text.append("4. ✅ Complete Task\n", style="cyan")
+    menu_text.append("5. 🗑️  Delete Task\n", style="cyan")
+    menu_text.append("6. 🚪 Exit\n\n", style="cyan")
+
+    # Optional features
+    menu_text.append("Optional Features:\n", style="bold blue")
+    menu_text.append("7. 📊 Sort by Priority\n", style="green")
+    menu_text.append("8. 📅 Sort by Due Date\n", style="green")
+    menu_text.append("9. 🏷️  Filter by Category\n", style="green")
+    menu_text.append("10. 🔄 Clear Filter\n", style="green")
+    menu_text.append("11. 🔍 Search Tasks\n", style="green")
+    menu_text.append("12. 📈 View Statistics\n", style="green")
+    menu_text.append("13. 🎯 Complete All Tasks\n", style="green")
+    menu_text.append("14. 🧹 Delete Completed Tasks\n", style="green")
+    menu_text.append("15. 💬 Add Note to Task\n", style="green")
+    menu_text.append("16. 📌 Add Subtask\n", style="green")
+    menu_text.append("17. 🎨 Change Theme\n", style="green")
+    menu_text.append("18. 💾 Export Tasks\n", style="green")
+    menu_text.append("19. 📥 Import Tasks\n", style="green")
+
+    console.print(Panel(menu_text, title="Menu", border_style="blue"))
 
 
 def get_menu_choice() -> int:
@@ -155,7 +182,7 @@ def get_menu_choice() -> int:
     """
     while True:
         try:
-            choice = input(Fore.YELLOW + "Enter your choice (1-19): ")
+            choice = console.input("[bold yellow]Enter your choice (1-19): [/bold yellow]")
             choice_num = int(choice)
 
             if 1 <= choice_num <= 19:
@@ -179,7 +206,7 @@ def prompt_title() -> str:
         Valid task title
     """
     while True:
-        title = input(Fore.YELLOW + "\nEnter task title: ").strip()
+        title = console.input("\n[bold yellow]Enter task title: [/bold yellow]").strip()
 
         if not title:
             show_error("Title cannot be empty. Please try again.")
@@ -200,7 +227,7 @@ def prompt_description() -> str:
     Returns:
         Task description (may be empty)
     """
-    description = input(Fore.YELLOW + "Enter description (press Enter to skip): ").strip()
+    description = console.input("[bold yellow]Enter description (press Enter to skip): [/bold yellow]").strip()
     return description
 
 
@@ -214,7 +241,7 @@ def prompt_task_id() -> int:
     """
     while True:
         try:
-            task_id_input = input(Fore.YELLOW + "\nEnter task ID: ").strip()
+            task_id_input = console.input("\n[bold yellow]Enter task ID: [/bold yellow]").strip()
             task_id = int(task_id_input)
             return task_id
         except ValueError:
@@ -232,9 +259,7 @@ def show_success(message: str):
     Args:
         message: Success message to display
     """
-    print()
-    print(Fore.GREEN + Style.BRIGHT + f"✓ {message}")
-    print()
+    console.print(f"\n[bold green]✓ {message}[/bold green]\n")
     pause()
 
 
@@ -246,9 +271,7 @@ def show_error(message: str):
     Args:
         message: Error message to display
     """
-    print()
-    print(Fore.RED + Style.BRIGHT + f"✗ {message}")
-    print()
+    console.print(f"\n[bold red]✗ {message}[/bold red]\n")
 
 
 def confirm_delete() -> bool:
@@ -260,7 +283,7 @@ def confirm_delete() -> bool:
         True if user confirms, False otherwise
     """
     while True:
-        response = input(Fore.YELLOW + "Are you sure you want to delete this task? (y/n): ").strip().lower()
+        response = console.input("[bold yellow]Are you sure you want to delete this task? (y/n): [/bold yellow]").strip().lower()
 
         if response in ['y', 'yes']:
             return True
@@ -284,13 +307,13 @@ def prompt_priority() -> TaskPriority:
         Selected TaskPriority
     """
     while True:
-        print(Fore.YELLOW + "\nSelect priority level:")
-        print("1. High (🔴)")
-        print("2. Medium (🟡)")
-        print("3. Low (🟢)")
+        console.print("\n[bold yellow]Select priority level:[/bold yellow]")
+        console.print("1. High (🔴)")
+        console.print("2. Medium (🟡)")
+        console.print("3. Low (🟢)")
 
         try:
-            choice = input(Fore.YELLOW + "Enter choice (1-3): ").strip()
+            choice = console.input("[bold yellow]Enter choice (1-3): [/bold yellow]").strip()
             choice_num = int(choice)
 
             if choice_num == 1:
@@ -314,7 +337,7 @@ def prompt_due_date() -> date | None:
         Selected due date or None if skipped
     """
     while True:
-        date_input = input(Fore.YELLOW + "\nEnter due date (YYYY-MM-DD) or press Enter to skip: ").strip()
+        date_input = console.input("\n[bold yellow]Enter due date (YYYY-MM-DD) or press Enter to skip: [/bold yellow]").strip()
 
         if not date_input:
             return None  # Skip due date
@@ -334,15 +357,15 @@ def prompt_category() -> TaskCategory:
         Selected TaskCategory
     """
     while True:
-        print(Fore.YELLOW + "\nSelect category:")
-        print("1. Work")
-        print("2. Personal")
-        print("3. Shopping")
-        print("4. Health")
-        print("5. Other")
+        console.print("\n[bold yellow]Select category:[/bold yellow]")
+        console.print("1. Work")
+        console.print("2. Personal")
+        console.print("3. Shopping")
+        console.print("4. Health")
+        console.print("5. Other")
 
         try:
-            choice = input(Fore.YELLOW + "Enter choice (1-5): ").strip()
+            choice = console.input("[bold yellow]Enter choice (1-5): [/bold yellow]").strip()
             choice_num = int(choice)
 
             if choice_num == 1:
@@ -369,7 +392,8 @@ def prompt_keyword() -> str:
     Returns:
         Search keyword
     """
-    keyword = input(Fore.YELLOW + "\nEnter keyword to search: ").strip()
+    menu_option_color = theme_manager.get_color("menu_option")
+    keyword = input(menu_option_color + "\nEnter keyword to search: ").strip()
     return keyword
 
 
@@ -391,7 +415,7 @@ def highlight_keyword(text: str, keyword: str) -> str:
     # Case-insensitive search and replace
     import re
     pattern = re.compile(re.escape(keyword), re.IGNORECASE)
-    highlighted = pattern.sub(Fore.CYAN + Style.BRIGHT + r'\g<0>' + Fore.WHITE, text)
+    highlighted = pattern.sub(theme_manager.get_color("info") + Style.BRIGHT + r'\g<0>' + theme_manager.get_color("task_status_incomplete"), text)
     return highlighted
 
 
@@ -404,35 +428,35 @@ def display_statistics(stats: dict):
         stats: Statistics dictionary from service
     """
     clear_screen()
-    print(Fore.CYAN + "=" * 80)
-    print(Fore.YELLOW + Style.BRIGHT + "📊 TASK STATISTICS".center(80))
-    print(Fore.CYAN + "=" * 80)
-    print()
+    display_header()
+
+    # Create a statistics panel using Rich
+    stats_text = Text()
+    stats_text.append("📊 TASK STATISTICS\n\n", style="bold yellow")
 
     # Overall stats
-    print(f"Total Tasks: {stats['total']}")
-    print(f"{Fore.GREEN}✓ Completed: {stats['completed']} ({stats['completion_rate']:.1f}%)")
-    print(f"{Fore.WHITE}○ Incomplete: {stats['incomplete']}")
-    print()
+    stats_text.append("📈 Overall Statistics:\n", style="bold blue")
+    stats_text.append(f"  📊 Total Tasks: {stats['total']}\n", style="cyan")
+    stats_text.append(f"  ✅ Completed: {stats['completed']}\n", style="green")
+    stats_text.append(f"  🔄 Incomplete: {stats['incomplete']}\n", style="magenta")
+    stats_text.append(f"  📈 Completion Rate: {stats['completion_rate']:.1f}%\n\n", style="yellow")
 
     # By priority
-    print(Fore.YELLOW + "By Priority:")
+    stats_text.append("🏷️  By Priority:\n", style="bold blue")
     for priority, count in stats['by_priority'].items():
-        icon = priority.icon
-        print(f"  {icon} {priority.value.title()}: {count}")
-    print()
+        stats_text.append(f"  {priority.icon} {priority.value.title()}: {count}\n", style="cyan")
+    stats_text.append("\n")
 
     # By category
-    print(Fore.YELLOW + "By Category:")
+    stats_text.append("📁 By Category:\n", style="bold blue")
     for category, count in stats['by_category'].items():
-        color = category.color
-        print(f"  {color}[{category.label}]: {count}")
-    print()
+        stats_text.append(f"  [{category.label}]: {count}\n", style="cyan")
 
-    print(Fore.CYAN + "=" * 80)
-    print(Fore.YELLOW + "Press Enter to return to menu...")
+    console.print(Panel(stats_text, title="Statistics", border_style="green"))
+
+    # Wait for user input
     try:
-        input()
+        console.input("\n[bold yellow]Press Enter to return to menu...[/bold yellow]")
     except KeyboardInterrupt:
         print()
 
@@ -445,7 +469,8 @@ def prompt_task_note() -> str:
     Returns:
         Note text
     """
-    note_text = input(Fore.YELLOW + "\nEnter note text: ").strip()
+    menu_option_color = theme_manager.get_color("menu_option")
+    note_text = input(menu_option_color + "\nEnter note text: ").strip()
     return note_text
 
 
@@ -457,7 +482,8 @@ def prompt_subtask_title() -> str:
     Returns:
         Subtask title
     """
-    subtask_title = input(Fore.YELLOW + "\nEnter subtask title: ").strip()
+    menu_option_color = theme_manager.get_color("menu_option")
+    subtask_title = input(menu_option_color + "\nEnter subtask title: ").strip()
     return subtask_title
 
 
@@ -469,15 +495,16 @@ def prompt_theme() -> str:
     Returns:
         Selected theme name
     """
+    menu_option_color = theme_manager.get_color("menu_option")
     while True:
-        print(Fore.YELLOW + "\nSelect theme:")
+        print(menu_option_color + "\nSelect theme:")
         print("1. Default")
         print("2. Dark")
         print("3. Light")
         print("4. Colorful")
 
         try:
-            choice = input(Fore.YELLOW + "Enter choice (1-4): ").strip()
+            choice = input(menu_option_color + "Enter choice (1-4): ").strip()
             choice_num = int(choice)
 
             if choice_num == 1:
@@ -505,5 +532,6 @@ def prompt_filename(default: str = "") -> str:
     Returns:
         Selected filename
     """
-    filename = input(Fore.YELLOW + f"\nEnter filename (default: {default}): ").strip()
+    menu_option_color = theme_manager.get_color("menu_option")
+    filename = input(menu_option_color + f"\nEnter filename (default: {default}): ").strip()
     return filename if filename else default

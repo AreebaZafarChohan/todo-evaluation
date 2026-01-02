@@ -1,13 +1,16 @@
 """Business logic and use cases - Task-ID: T011-T017, T058-T146"""
 
+import json
 from datetime import date
+from pathlib import Path
 from typing import Optional
 from .exceptions import ValidationError, TaskNotFound
-from .models import Task, TaskStatus, TaskPriority, TaskCategory, TaskNote, Subtask
+from .models import Task, TaskStatus, TaskPriority, TaskCategory, TaskNote, Subtask, ThemeManager
 from . import storage
 
 # Global variable to store the current theme
 current_theme = "default"
+theme_manager = ThemeManager(current_theme)
 
 
 class TodoService:
@@ -20,7 +23,11 @@ class TodoService:
 
     def __init__(self) -> None:
         """Initialize the service - Task-ID: T011"""
-        pass
+        global current_theme, theme_manager
+        # Load the saved theme from config
+        saved_theme = self._load_theme_config()
+        current_theme = saved_theme
+        theme_manager = ThemeManager(saved_theme)
 
     def add_task(self, title: str, description: str = "", priority: TaskPriority = TaskPriority.MEDIUM,
                  due_date: Optional[date] = None, category: TaskCategory = TaskCategory.OTHER) -> Task:
@@ -548,10 +555,13 @@ class TodoService:
         Args:
             theme_name: The name of the theme to set
         """
-        global current_theme
+        global current_theme, theme_manager
         # Validate that the theme exists
         if theme_name in ["default", "dark", "light", "colorful"]:
             current_theme = theme_name
+            theme_manager.set_theme(theme_name)
+            # Persist the theme to config file
+            self._save_theme_config(theme_name)
 
     def get_current_theme(self) -> str:
         """
@@ -563,6 +573,53 @@ class TodoService:
         """
         global current_theme
         return current_theme
+
+    def _save_theme_config(self, theme_name: str) -> None:
+        """
+        Save the theme configuration to a file.
+
+        Args:
+            theme_name: The name of the theme to save
+        """
+        config_path = Path.home() / ".todo_cli_config.json"
+        config = {}
+
+        # Load existing config if it exists
+        if config_path.exists():
+            try:
+                with config_path.open('r') as f:
+                    config = json.load(f)
+            except json.JSONDecodeError:
+                config = {}
+
+        # Update the theme in the config
+        config['theme'] = theme_name
+
+        # Save the config
+        with config_path.open('w') as f:
+            json.dump(config, f)
+
+    def _load_theme_config(self) -> str:
+        """
+        Load the theme configuration from a file.
+
+        Returns:
+            The saved theme name, or "default" if no config exists
+        """
+        config_path = Path.home() / ".todo_cli_config.json"
+
+        if config_path.exists():
+            try:
+                with config_path.open('r') as f:
+                    config = json.load(f)
+                    saved_theme = config.get('theme', 'default')
+                    # Validate the saved theme exists
+                    if saved_theme in ["default", "dark", "light", "colorful"]:
+                        return saved_theme
+            except json.JSONDecodeError:
+                pass
+
+        return "default"
 
     def export_tasks(self, filename: str) -> None:
         """

@@ -1,5 +1,6 @@
 """Main application loop - Task-ID: T030-T038, T058-T150"""
 
+from datetime import date
 from .service import TodoService
 from .ui import (
     clear_screen,
@@ -58,14 +59,16 @@ def handle_view_tasks(service: TodoService):
     Args:
         service: TodoService instance
     """
+    from .ui import console  # Import Rich console
+
     tasks = service.get_tasks()
 
     clear_screen()
     display_tasks(tasks)
 
-    print(Fore.YELLOW + "\nPress Enter to return to menu...")
+    console.input("\n[bold yellow]Press Enter to return to menu...[/bold yellow]")
     try:
-        input()
+        pass  # Input already handled above
     except KeyboardInterrupt:
         print()
 
@@ -254,15 +257,17 @@ def handle_sort_by_priority(service: TodoService):
     Args:
         service: TodoService instance
     """
+    from .ui import console  # Import Rich console
+
     tasks = service.get_tasks()
     sorted_tasks = service.sort_tasks_by_priority(tasks)
 
     clear_screen()
     display_tasks(sorted_tasks)
 
-    print(Fore.YELLOW + "\nPress Enter to return to menu...")
+    console.input("\n[bold yellow]Press Enter to return to menu...[/bold yellow]")
     try:
-        input()
+        pass  # Input already handled above
     except KeyboardInterrupt:
         print()
 
@@ -275,15 +280,17 @@ def handle_sort_by_due_date(service: TodoService):
     Args:
         service: TodoService instance
     """
+    from .ui import console  # Import Rich console
+
     tasks = service.get_tasks()
     sorted_tasks = service.sort_tasks_by_due_date(tasks)
 
     clear_screen()
     display_tasks(sorted_tasks)
 
-    print(Fore.YELLOW + "\nPress Enter to return to menu...")
+    console.input("\n[bold yellow]Press Enter to return to menu...[/bold yellow]")
     try:
-        input()
+        pass  # Input already handled above
     except KeyboardInterrupt:
         print()
 
@@ -296,6 +303,8 @@ def handle_filter_by_category(service: TodoService):
     Args:
         service: TodoService instance
     """
+    from .ui import console  # Import Rich console
+
     try:
         category = prompt_category()
         tasks = service.get_tasks_by_category(category)
@@ -303,9 +312,9 @@ def handle_filter_by_category(service: TodoService):
         clear_screen()
         display_tasks(tasks)
 
-        print(Fore.YELLOW + "\nPress Enter to return to menu...")
+        console.input("\n[bold yellow]Press Enter to return to menu...[/bold yellow]")
         try:
-            input()
+            pass  # Input already handled above
         except KeyboardInterrupt:
             print()
     except KeyboardInterrupt:
@@ -321,46 +330,83 @@ def handle_search_tasks(service: TodoService):
     Args:
         service: TodoService instance
     """
+    from .ui import display_header, highlight_keyword, console, Panel, Table, TaskStatus, TaskCategory  # Import necessary UI components
+
     try:
         keyword = prompt_keyword()
         tasks = service.search_tasks(keyword)
 
         clear_screen()
+        display_header()
+
         if tasks:
-            print(Fore.YELLOW + f"Search Results for: '{keyword}'")
-            print(Fore.CYAN + "=" * 80)
-            print()
+            from rich import box
+
+            # Create a table for search results with grid lines
+            table = Table(
+                title=f"🔍 Search Results for: '{keyword}'",
+                show_header=True,
+                header_style="bold magenta",
+                show_lines=True,  # This adds lines between rows
+                box=box.ROUNDED  # Using a rounded box style for better visual separation
+            )
+            table.add_column("ID", style="dim", width=5)
+            table.add_column("Priority", width=10)
+            table.add_column("Title", width=20)
+            table.add_column("Description", width=25)
+            table.add_column("Status", width=12)
+            table.add_column("Category", width=10)
+            table.add_column("Notes", width=8)
+            table.add_column("Subtasks", width=10)
 
             for task in tasks:
                 # Highlight keyword in title and description
                 highlighted_title = highlight_keyword(task.title, keyword)
                 highlighted_description = highlight_keyword(task.description, keyword)
 
-                # Status icon and color
+                # Determine status text and color
                 if task.status == TaskStatus.COMPLETE:
-                    icon = Fore.GREEN + "✓"
+                    status_text = "[green]✅ Complete[/green]"
                 else:
-                    icon = Fore.WHITE + "○"
+                    if task.due_date and task.due_date < date.today():
+                        status_text = "[red]❌ Overdue[/red]"
+                    elif task.due_date and task.due_date == date.today():
+                        status_text = "[yellow]⚠️ Due Today[/yellow]"
+                    else:
+                        status_text = "[blue]⏳ Incomplete[/blue]"
 
-                # Display task
-                print(f"{icon} [{task.id}] {Style.BRIGHT}{highlighted_title}")
-                print(f"    Status: {Fore.GREEN + 'Complete' if task.status == TaskStatus.COMPLETE else Fore.WHITE + 'Incomplete'}")
+                # Format description
+                description = highlighted_description[:20] + "..." if len(highlighted_description) > 20 else highlighted_description
 
-                if task.description:
-                    print(f"    Description: {highlighted_description}")
+                # Format notes count
+                notes_count = f"[cyan]{len(task.notes)}[/cyan]" if task.notes else "[dim]-[/dim]"
+
+                # Format subtasks count
+                if task.subtasks:
+                    completed_subtasks = len([s for s in task.subtasks if s.status == TaskStatus.COMPLETE])
+                    total_subtasks = len(task.subtasks)
+                    subtasks_count = f"[cyan]{completed_subtasks}/{total_subtasks}[/cyan]"
                 else:
-                    print(Fore.WHITE + Style.DIM + "    Description: No description")
-                print()
+                    subtasks_count = "[dim]-[/dim]"
+
+                # Add row to table
+                table.add_row(
+                    str(task.id),
+                    task.priority.icon,
+                    highlighted_title,
+                    description or "[italic]No description[/italic]",
+                    status_text,
+                    task.category.label,
+                    notes_count,
+                    subtasks_count
+                )
+
+            console.print(table)
         else:
-            print(Fore.YELLOW + f"No tasks found matching '{keyword}'")
-            print()
+            console.print(Panel(f"[yellow]📭 No tasks found matching '{keyword}'[/yellow]", expand=False))
 
-        print(Fore.CYAN + "=" * 80)
-        print(Fore.YELLOW + "Press Enter to return to menu...")
-        try:
-            input()
-        except KeyboardInterrupt:
-            print()
+        console.input("\n[bold yellow]Press Enter to return to menu...[/bold yellow]")
+
     except KeyboardInterrupt:
         print()
         show_error("Operation cancelled")
