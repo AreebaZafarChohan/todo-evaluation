@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.11+ (as mandated by constitution) + FastAPI, SQLModel, Pydantic (as mandated by constitution) (001-todo-db-spec)
+- Neon PostgreSQL (as specified in feature requirements) (001-todo-db-spec)
+
+## Recent Changes
+- 001-todo-db-spec: Added Python 3.11+ (as mandated by constitution) + FastAPI, SQLModel, Pydantic (as mandated by constitution)

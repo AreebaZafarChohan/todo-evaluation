@@ -208,3 +208,7 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Recent Changes
+- 001-backend-jwt-tasks: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 001-backend-jwt-tasks: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
