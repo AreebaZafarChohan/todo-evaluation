@@ -210,5 +210,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
 
 ## Recent Changes
+- 002-todo-frontend: Added TypeScript (Next.js 16+, React) + Next.js 16+ (App Router), React, Tailwind CSS, Better Auth (client-side SDK/library), FastAPI (for API communication)
 - 001-backend-jwt-tasks: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 001-backend-jwt-tasks: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
+## Active Technologies
+- TypeScript (Next.js 16+, React) + Next.js 16+ (App Router), React, Tailwind CSS, Better Auth (client-side SDK/library), FastAPI (for API communication) (002-todo-frontend)
+- N/A (Frontend only; data managed by backend) (002-todo-frontend)
