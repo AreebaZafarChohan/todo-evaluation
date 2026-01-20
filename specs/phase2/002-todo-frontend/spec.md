@@ -5,6 +5,20 @@
 **Status**: Draft  
 **Input**: User description: "You are Spec-Kit Plus acting as a senior frontend architect. Create a frontend specification for Phase II: Todo Full-Stack Web Application. Scope: - Frontend ONLY - Phase II only - Next.js 16+ (App Router) - TypeScript + Tailwind CSS - Authentication via Better Auth - Backend already implemented and secured with JWT Functional Requirements: 1. Authentication: - User signup - User signin - Session handling via Better Auth - JWT token automatically managed by Better Auth - Redirect unauthenticated users to login 2. Todo Management UI: - View all tasks for logged-in user - Create new task - Update task - Delete task - Mark task as complete/incomplete 3. API Integration: - All API calls go to FastAPI backend - JWT token attached automatically to every request - Backend endpoints used: - GET /api/{user_id}/tasks - POST /api/{user_id}/tasks - PUT /api/{user_id}/tasks/{id} - DELETE /api/{user_id}/tasks/{id} - PATCH /api/{user_id}/tasks/{id}/complete UI / UX Requirements: - Responsive layout (desktop + mobile) - Loading and error states - Clear feedback on actions (create/update/delete) - Clean, minimal UI Non-Functional Requirements: - No direct database access - No business logic duplication - Clear separation of components and pages - Environment-based backend URL config Out of Scope: - Chatbot - AI features - Dapr / Kafka - Deployment configs Success Criteria: - Authenticated users can fully manage their own tasks - Unauthenticated users cannot access task pages - Frontend works only through backend APIs remember that when you create its specs create it in specs/phase2 folder"
 
+## Clarifications
+
+### Session 2026-01-20
+
+- Q: How is the `user_id` expected to be handled by the frontend for API calls? → A: Backend derives `user_id` from JWT implicitly.
+- Q: What are the expected magnitudes for the number of users and number of tasks per user? → A: Up to 1,000 users, up to 100 tasks per user.
+- Q: What are the key performance indicators (KPIs) and target values for the frontend application's perceived performance? → A: Page load times < 2 seconds, TTI < 3 seconds.
+- Q: Are there specific data protection or encryption requirements for sensitive user or task data (both in transit and at rest)? → A: Standard industry best practices.
+- Q: What API versioning strategy should the frontend assume for interacting with the FastAPI backend? → A: No explicit versioning (implicit `v1`).
+
+## Assumptions
+
+-   **ASSUMPTION-001**: The application is expected to support up to 1,000 active users, with each user managing up to 100 tasks. This implies a small to medium scale application, allowing focus on core functionality and basic optimizations rather than extreme scalability challenges.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - User Authentication (Priority: P1)
@@ -63,12 +77,17 @@ As a logged-in user, I want to be able to view, create, update, delete, and mark
 -   **FR-009**: The frontend MUST allow users to mark tasks as complete or incomplete.
 -   **FR-010**: All API calls from the frontend MUST be routed to the FastAPI backend.
 -   **FR-011**: The frontend MUST automatically attach the JWT token to every request made to the backend.
--   **FR-012**: The frontend MUST utilize the following backend endpoints for task management:
-    *   `GET /api/{user_id}/tasks` (Fetch all tasks for a user)
-    *   `POST /api/{user_id}/tasks` (Create a new task)
-    *   `PUT /api/{user_id}/tasks/{id}` (Update an existing task)
-    *   `DELETE /api/{user_id}/tasks/{id}` (Delete a task)
-    *   `PATCH /api/{user_id}/tasks/{id}/complete` (Mark a task as complete/incomplete)
+-   **FR-012**: The frontend MUST utilize the following backend endpoints for task management, with the `user_id` being implicitly derived from the JWT on the backend:
+    *   `GET /api/tasks` (Fetch all tasks for the authenticated user)
+    *   `POST /api/tasks` (Create a new task for the authenticated user)
+    *   `PUT /api/tasks/{id}` (Update an existing task for the authenticated user)
+    *   `DELETE /api/tasks/{id}` (Delete a task for the authenticated user)
+    *   `PATCH /api/tasks/{id}/complete` (Mark a task as complete/incomplete for the authenticated user)
+
+## Non-Functional Requirements
+
+-   **NFR-001**: Data Protection: The application MUST adhere to standard industry best practices for data protection, including HTTPS for data in transit and encryption for data at rest (as handled by the backend/database provider).
+-   **NFR-002**: API Versioning: The frontend assumes an implicit `v1` API versioning strategy. Explicit versioning (e.g., `/v1/api/tasks`) is not required for this phase.
 
 ### Key Entities
 
@@ -84,3 +103,4 @@ As a logged-in user, I want to be able to view, create, update, delete, and mark
 -   **SC-003**: The frontend application successfully integrates with the backend APIs, with all API calls receiving a valid response within 500ms for 95% of requests under normal load.
 -   **SC-004**: The user interface provides clear visual feedback (e.g., loading indicators, success/error messages) for all user actions within 1 second of action initiation.
 -   **SC-005**: The application displays correctly and is fully functional on both desktop and mobile devices (responsive layout).
+-   **SC-006**: Key frontend performance metrics: Initial page load time under 2 seconds, Time To Interactive (TTI) under 3 seconds.
