@@ -1,0 +1,10 @@
+python-jose[cryptography]
+passlib[bcrypt]
+sqlmodel
+fastapi
+uvicorn[standard]
+python-dotenv
+psycopg2-binary
+pytest
+httpx
+sqlmodel

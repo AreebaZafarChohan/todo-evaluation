@@ -13,49 +13,49 @@
 
 This phase establishes the foundational project structure and basic configurations.
 
-- [ ] T001 Initialize a new Next.js project with TypeScript and App Router in `frontend/`
-- [ ] T002 Configure Tailwind CSS within the Next.js project by modifying `tailwind.config.ts`, `postcss.config.mjs`, and `frontend/src/app/globals.css`
-- [ ] T003 Set up environment variables by creating `.env.local` and configuring `NEXT_PUBLIC_BACKEND_API_URL`
+- [X] T001 Initialize a new Next.js project with TypeScript and App Router in `frontend/`
+- [X] T002 Configure Tailwind CSS within the Next.js project by modifying `tailwind.config.ts`, `postcss.config.mjs`, and `frontend/src/app/globals.css`
+- [X] T003 Set up environment variables by creating `.env.local` and configuring `NEXT_PUBLIC_BACKEND_API_URL`
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
 This phase integrates core functionalities that are prerequisites for both authentication and task management.
 
-- [ ] T004 Install and configure Better Auth client-side SDK/library for JWT session handling
-- [ ] T005 Create `frontend/src/lib/api.ts` for API client abstraction, automatically attaching JWT token to requests
-- [ ] T006 Implement generic error handling and loading state management within `frontend/src/lib/api.ts`
+- [X] T004 Install and configure Better Auth client-side SDK/library for JWT session handling
+- [X] T005 Create `frontend/src/lib/api.ts` for API client abstraction, automatically attaching JWT token to requests
+- [X] T006 Implement generic error handling and loading state management within `frontend/src/lib/api.ts`
 
 ## Phase 3: User Story 1 - User Authentication (Priority: P1)
 
 **Goal**: Enable users to sign up, sign in, and ensure protected routes are inaccessible to unauthenticated users.
 **Independent Test Criteria**: A new user can successfully create an account, log in, log out, and attempts to access `/tasks` when unauthenticated are redirected to `/signin`.
 
-- [ ] T007 [US1] Create authentication layout for signup/signin pages in `frontend/src/app/(auth)/layout.tsx`
-- [ ] T008 [US1] Implement signup page UI and logic in `frontend/src/app/(auth)/signup/page.tsx`
-- [ ] T009 [US1] Implement signin page UI and logic in `frontend/src/app/(auth)/signin/page.tsx`
-- [ ] T010 [US1] Develop client-side session management logic using Better Auth SDK
-- [ ] T011 [US1] Implement route protection for authenticated routes using Next.js middleware or HOCs in `frontend/src/app/(protected)/layout.tsx`
+- [X] T007 [US1] Create authentication layout for signup/signin pages in `frontend/src/app/(auth)/layout.tsx`
+- [X] T008 [US1] Implement signup page UI and logic in `frontend/src/app/(auth)/signup/page.tsx`
+- [X] T009 [US1] Implement signin page UI and logic in `frontend/src/app/(auth)/signin/page.tsx`
+- [X] T010 [US1] Develop client-side session management logic using Better Auth SDK
+- [X] T011 [US1] Implement route protection for authenticated routes using Next.js middleware or HOCs in `frontend/src/app/(protected)/layout.tsx`
 
 ## Phase 4: User Story 2 - Todo Management (Priority: P1)
 
 **Goal**: Provide a comprehensive UI for authenticated users to manage their tasks.
 **Independent Test Criteria**: A logged-in user can view their tasks, and successfully create, update, delete, and toggle completion status of tasks.
 
-- [ ] T012 [US2] Create task list page UI and integrate with API client to fetch and display tasks in `frontend/src/app/(protected)/tasks/page.tsx`
-- [ ] T013 [US2] Implement create task form UI and logic, integrating with API client in `frontend/src/components/tasks/CreateTaskForm.tsx` (or similar)
-- [ ] T014 [US2] Implement update task UI and logic, integrating with API client in `frontend/src/components/tasks/UpdateTaskForm.tsx` (or similar)
-- [ ] T015 [US2] Implement delete task action UI and logic, integrating with API client in `frontend/src/components/tasks/TaskItem.tsx` (or similar)
-- [ ] T016 [US2] Implement completion toggle UI and logic, integrating with API client in `frontend/src/components/tasks/TaskItem.tsx` (or similar)
-- [ ] T017 [US2] Implement loading, error, and empty states for task management UI in `frontend/src/app/(protected)/tasks/page.tsx` and `frontend/src/components/tasks/`
-- [ ] T018 [US2] Ensure responsive layout for all task management UI components using Tailwind CSS
+- [X] T012 [US2] Create task list page UI and integrate with API client to fetch and display tasks in `frontend/src/app/(protected)/tasks/page.tsx`
+- [X] T013 [US2] Implement create task form UI and logic, integrating with API client in `frontend/src/components/tasks/CreateTaskForm.tsx` (or similar)
+- [X] T014 [US2] Implement update task UI and logic, integrating with API client in `frontend/src/components/tasks/UpdateTaskForm.tsx` (or similar)
+- [X] T015 [US2] Implement delete task action UI and logic, integrating with API client in `frontend/src/components/tasks/TaskItem.tsx` (or similar)
+- [X] T016 [US2] Implement completion toggle UI and logic, integrating with API client in `frontend/src/components/tasks/TaskItem.tsx` (or similar)
+- [X] T017 [US2] Implement loading, error, and empty states for task management UI in `frontend/src/app/(protected)/tasks/page.tsx` and `frontend/src/components/tasks/`
+- [X] T018 [US2] Ensure responsive layout for all task management UI components using Tailwind CSS
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
 This phase focuses on refining the user experience and addressing general application quality.
 
-- [ ] T019 Implement general UI polish and styling refinements across the application
-- [ ] T020 Review and enhance accessibility for key user interactions
-- [ ] T021 Optimize frontend assets and bundle size for improved loading performance
+- [X] T019 Implement general UI polish and styling refinements across the application
+- [X] T020 Review and enhance accessibility for key user interactions
+- [X] T021 Optimize frontend assets and bundle size for improved loading performance
 
 ---
 

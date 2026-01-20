@@ -1,0 +1,319 @@
+openapi: 3.0.3
+info:
+  title: Todo Application Database API
+  description: API specification for the Todo application database layer
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      description: Creates a new user in the database (typically handled by Better Auth)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid user data
+        '409':
+          description: User with this email already exists
+  /users/{userId}:
+    get:
+      summary: Get user by ID
+      description: Retrieves user information by their ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the user
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+  /users/{userId}/tasks:
+    get:
+      summary: Get all tasks for a user
+      description: Retrieves all tasks associated with a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the user
+        - name: completed
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter tasks by completion status
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of tasks to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of tasks to skip
+      responses:
+        '200':
+          description: List of tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  total:
+                    type: integer
+        '404':
+          description: User not found
+    post:
+      summary: Create a new task for a user
+      description: Creates a new task associated with a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid task data
+        '404':
+          description: User not found
+  /users/{userId}/tasks/{taskId}:
+    get:
+      summary: Get a specific task
+      description: Retrieves a specific task by its ID and user ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the user
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Unique identifier of the task
+      responses:
+        '200':
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task or user not found
+    put:
+      summary: Update a task
+      description: Updates an existing task
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the user
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Unique identifier of the task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid task data
+        '404':
+          description: Task or user not found
+    delete:
+      summary: Delete a task
+      description: Deletes a specific task
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the user
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Unique identifier of the task
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          description: Task or user not found
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: "user_123456789"
+        email:
+          type: string
+          format: email
+          description: Email address of the user
+          example: "user@example.com"
+        name:
+          type: string
+          description: Display name of the user
+          example: "John Doe"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the user account was created
+          example: "2023-01-01T00:00:00Z"
+    Task:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the task
+          example: 1
+        user_id:
+          type: string
+          description: ID of the user who owns this task
+          example: "user_123456789"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Title of the task
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Optional description of the task
+          example: "Milk, eggs, bread"
+        completed:
+          type: boolean
+          description: Completion status of the task
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the task was created
+          example: "2023-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the task was last updated
+          example: "2023-01-01T00:00:00Z"
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Title of the task
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Optional description of the task
+          example: "Milk, eggs, bread"
+        completed:
+          type: boolean
+          description: Completion status of the task (defaults to false)
+          example: false
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Updated title of the task
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Updated description of the task
+          example: "Milk, eggs, bread"
+        completed:
+          type: boolean
+          description: Updated completion status of the task
+          example: true
