@@ -1,8 +1,14 @@
+// T021: CreateTaskForm with animations
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/src/lib/api';
-import { Task, TaskCreate } from '@/src/types/task';
+import { motion, AnimatePresence } from 'framer-motion';
+import { apiClient } from '@/lib/api';
+import { Task, TaskCreate } from '@/types/task';
+import { GradientButton } from '@/components/ui/gradient-button';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { cn } from '@/lib/utils';
+import { FiPlus, FiAlertCircle } from 'react-icons/fi';
 
 interface CreateTaskFormProps {
   onTaskCreated: (task: Task) => void;
@@ -13,10 +19,12 @@ export default function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       setError('Title is required');
       return;
@@ -33,7 +41,7 @@ export default function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
 
       const newTask: Task = await apiClient.post('/tasks', newTaskData);
       onTaskCreated(newTask);
-      
+
       // Reset form
       setTitle('');
       setDescription('');
@@ -46,61 +54,107 @@ export default function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-8">
-      <div className="shadow overflow-hidden rounded-md">
-        <div className="px-4 py-5 bg-white sm:p-6">
-          <div className="grid grid-cols-6 gap-6">
-            <div className="col-span-6">
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Task Title *
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-8"
+    >
+      <div
+        className={cn(
+          'rounded-xl overflow-hidden transition-all duration-300',
+          'bg-[var(--card-bg)] border',
+          isFocused
+            ? 'border-[var(--primary-500)]/50 shadow-lg shadow-[var(--primary-500)]/10'
+            : 'border-[var(--card-border)]'
+        )}
+      >
+        <div className="p-6">
+          <div className="space-y-4">
+            {/* Title input */}
+            <div>
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-[var(--foreground)] mb-2"
+              >
+                Task Title <span className="text-[var(--error)]">*</span>
               </label>
-              <input
+              <motion.input
                 type="text"
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                whileFocus={prefersReducedMotion ? {} : { scale: 1.01 }}
+                className={cn(
+                  'w-full px-4 py-3 rounded-lg transition-all duration-200',
+                  'bg-[var(--background)] border border-[var(--card-border)]',
+                  'text-[var(--foreground)] placeholder-[var(--muted-foreground)]',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]/50 focus:border-[var(--primary-500)]'
+                )}
                 placeholder="What needs to be done?"
                 disabled={isLoading}
               />
             </div>
 
-            <div className="col-span-6">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            {/* Description input */}
+            <div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-[var(--foreground)] mb-2"
+              >
                 Description
               </label>
-              <textarea
+              <motion.textarea
                 id="description"
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                whileFocus={prefersReducedMotion ? {} : { scale: 1.01 }}
+                className={cn(
+                  'w-full px-4 py-3 rounded-lg transition-all duration-200 resize-none',
+                  'bg-[var(--background)] border border-[var(--card-border)]',
+                  'text-[var(--foreground)] placeholder-[var(--muted-foreground)]',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]/50 focus:border-[var(--primary-500)]'
+                )}
                 placeholder="Add details about this task..."
                 disabled={isLoading}
               />
             </div>
           </div>
 
-          {error && (
-            <div className="mt-4 rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
+          {/* Error message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                className="mt-4 rounded-lg bg-[var(--error)]/10 border border-[var(--error)]/20 p-4 flex items-center gap-2"
+              >
+                <FiAlertCircle className="w-5 h-5 text-[var(--error)] flex-shrink-0" />
+                <span className="text-sm text-[var(--error)]">{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-          <button
+
+        {/* Submit button area */}
+        <div className="px-6 py-4 bg-[var(--muted)]/50 border-t border-[var(--card-border)] flex justify-end">
+          <GradientButton
             type="submit"
+            isLoading={isLoading}
             disabled={isLoading}
-            className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md ${
-              isLoading 
-                ? 'bg-indigo-400 cursor-not-allowed' 
-                : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-            } text-white`}
+            className="min-w-[140px]"
           >
+            <FiPlus className="w-5 h-5 mr-2" />
             {isLoading ? 'Creating...' : 'Create Task'}
-          </button>
+          </GradientButton>
         </div>
       </div>
-    </form>
+    </motion.form>
   );
 }

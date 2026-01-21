@@ -1,7 +1,5 @@
-import { getSession } from 'better-auth/client';
-
 // Define the base API URL from environment variable
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
 
 /**
  * Generic API client for interacting with the backend
@@ -14,16 +12,16 @@ export const apiClient = {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    // Get the current session to retrieve the JWT token
-    const session = await getSession();
-    
+    // Get the JWT token from localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
     const headers = {
       'Content-Type': 'application/json',
-      ...(session?.token && { Authorization: `Bearer ${session.token}` }),
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     };
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+    const response = await fetch(`${BASE_URL}/api${endpoint}`, {
       ...options,
       headers,
     });

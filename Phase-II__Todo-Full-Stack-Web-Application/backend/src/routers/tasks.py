@@ -11,15 +11,12 @@ from src.schemas.tasks import TaskUpdate
 
 router = APIRouter()
 
-@router.post("/api/{user_id}/tasks", response_model=Task)
+@router.post("/api/tasks", response_model=Task)
 def create_task(
-    user_id: str,
     task: Task,
     current_user_id: str = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
-    if user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to create tasks for this user")
 
     # Get the latest task to determine the next ID
     latest_task = session.exec(
@@ -51,9 +48,8 @@ def create_task(
     session.refresh(db_task)
     return db_task
 
-@router.get("/api/{user_id}/tasks", response_model=List[Task])
+@router.get("/api/tasks", response_model=List[Task])
 def get_tasks(
-    user_id: str,
     current_user_id: str = Depends(get_current_user_id),
     session: Session = Depends(get_session),
     offset: int = Query(0, ge=0),
@@ -61,8 +57,6 @@ def get_tasks(
     sort_by: str = Query("id"),
     sort_order: str = Query("asc")
 ):
-    if user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access tasks for this user")
 
     # Validate sort_by parameter to prevent injection
     allowed_sort_fields = ["id", "title", "completed", "created_at", "updated_at"]
@@ -85,15 +79,12 @@ def get_tasks(
     ).all()
     return tasks
 
-@router.get("/api/{user_id}/tasks/{task_id}", response_model=Task)
+@router.get("/api/tasks/{task_id}", response_model=Task)
 def get_task_by_id(
-    user_id: str,
     task_id: str,
     current_user_id: str = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
-    if user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access tasks for this user")
 
     task = session.exec(
         select(Task)
@@ -104,16 +95,13 @@ def get_task_by_id(
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-@router.put("/api/{user_id}/tasks/{task_id}", response_model=Task)
+@router.put("/api/tasks/{task_id}", response_model=Task)
 def update_task(
-    user_id: str,
     task_id: str,
     task: TaskUpdate,
     current_user_id: str = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
-    if user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to update tasks for this user")
 
     db_task = session.exec(
         select(Task)
@@ -136,15 +124,12 @@ def update_task(
     session.refresh(db_task)
     return db_task
 
-@router.delete("/api/{user_id}/tasks/{task_id}")
+@router.delete("/api/tasks/{task_id}")
 def delete_task(
-    user_id: str,
     task_id: str,
     current_user_id: str = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
-    if user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete tasks for this user")
 
     task = session.exec(
         select(Task)
@@ -158,15 +143,12 @@ def delete_task(
     session.commit()
     return {"message": "Task deleted successfully"}
 
-@router.patch("/api/{user_id}/tasks/{task_id}/complete", response_model=Task)
+@router.patch("/api/tasks/{task_id}/complete", response_model=Task)
 def complete_task(
-    user_id: str,
     task_id: str,
     current_user_id: str = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
-    if user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to complete tasks for this user")
 
     db_task = session.exec(
         select(Task)

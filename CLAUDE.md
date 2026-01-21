@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- TypeScript 5.x with Next.js 16.1.4, React 19.2.3 (001-modern-ui-overhaul)
+- localStorage (theme preference only) (001-modern-ui-overhaul)
+
+## Recent Changes
+- 001-modern-ui-overhaul: Added TypeScript 5.x with Next.js 16.1.4, React 19.2.3
