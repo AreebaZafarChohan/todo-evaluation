@@ -1,14 +1,14 @@
-// T017-T020: TaskItem with 3D card and animations
+// T017-T020: TaskItem with cosmic theme and smooth animations
 'use client';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Task } from '@/types/task';
 import UpdateTaskForm from './UpdateTaskForm';
-import { Card3D } from '@/components/ui/3d-card';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { cn } from '@/lib/utils';
-import { FiEdit2, FiTrash2, FiCheck, FiCircle } from 'react-icons/fi';
+import { apiClient } from '@/lib/api';
+import { FiEdit2, FiTrash2, FiCheck, FiCalendar } from 'react-icons/fi';
 
 interface TaskItemProps {
   task: Task;
@@ -16,6 +16,7 @@ interface TaskItemProps {
   onUpdate: (task: Task) => void;
   onDelete: (taskId: string) => void;
   index?: number;
+  viewMode?: 'grid' | 'list';
 }
 
 export default function TaskItem({
@@ -23,7 +24,8 @@ export default function TaskItem({
   onToggleComplete,
   onUpdate,
   onDelete,
-  index = 0
+  index = 0,
+  viewMode = 'grid'
 }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,9 +39,7 @@ export default function TaskItem({
 
     setIsLoading(true);
     try {
-      await fetch(`/api/tasks/${task.id}`, {
-        method: 'DELETE',
-      });
+      await apiClient.delete(`/tasks/${task.id}`);
       onDelete(task.id);
     } catch (error) {
       console.error('Failed to delete task:', error);
@@ -51,8 +51,7 @@ export default function TaskItem({
 
   const handleToggleComplete = async () => {
     setIsCompleting(true);
-    // Small delay for animation effect
-    await new Promise(resolve => setTimeout(resolve, prefersReducedMotion ? 0 : 300));
+    await new Promise(resolve => setTimeout(resolve, prefersReducedMotion ? 0 : 200));
     onToggleComplete(task);
     setIsCompleting(false);
   };
@@ -62,11 +61,10 @@ export default function TaskItem({
     setIsEditing(false);
   };
 
-  // T018: Entrance animation variants
   const cardVariants = {
     hidden: {
       opacity: 0,
-      scale: 0.9,
+      scale: 0.95,
       y: 20
     },
     visible: {
@@ -81,25 +79,21 @@ export default function TaskItem({
         damping: 30,
       }
     },
-    // T020: Exit animation
     exit: {
       opacity: 0,
       scale: 0.9,
-      x: -100,
+      x: -50,
       transition: {
         duration: 0.2,
       }
     },
   };
 
-  // T019: Completion animation
-  const completionVariants = {
-    incomplete: { scale: 1 },
-    completing: {
-      scale: [1, 1.2, 1],
-      transition: { duration: 0.3 }
-    },
-    complete: { scale: 1 },
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   return (
@@ -109,19 +103,24 @@ export default function TaskItem({
       initial="hidden"
       animate="visible"
       exit="exit"
+      className="relative group"
     >
-      <Card3D
-        containerClassName="w-full"
-        className={cn(
-          'p-4 rounded-xl border transition-all duration-300',
-          task.completed
-            ? 'bg-[var(--muted)]/50 border-[var(--card-border)]'
-            : 'bg-[var(--card-bg)] border-[var(--card-border)] hover:border-[var(--primary-500)]/30',
-          isCompleting && 'ring-2 ring-[var(--success)]/50'
-        )}
-        rotationIntensity={task.completed ? 5 : 10}
-        glareEnabled={!task.completed}
-      >
+      {/* Hover glow effect */}
+      <div className={cn(
+        'absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm',
+        task.completed
+          ? 'bg-gradient-to-r from-teal-500/30 to-green-500/30'
+          : 'bg-gradient-to-r from-purple-500/40 to-teal-500/40'
+      )} />
+
+      {/* Card */}
+      <div className={cn(
+        'relative p-5 rounded-2xl border backdrop-blur-sm transition-all duration-300',
+        task.completed
+          ? 'bg-white/3 border-white/5'
+          : 'bg-white/5 border-white/10 hover:bg-white/8',
+        viewMode === 'list' && 'flex items-center gap-4'
+      )}>
         <AnimatePresence mode="wait">
           {isEditing ? (
             <motion.div
@@ -129,6 +128,7 @@ export default function TaskItem({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="w-full"
             >
               <UpdateTaskForm
                 task={task}
@@ -139,103 +139,134 @@ export default function TaskItem({
           ) : (
             <motion.div
               key="display"
-              className="flex items-start gap-4"
+              className={cn(
+                'flex gap-4 w-full',
+                viewMode === 'grid' ? 'flex-col' : 'items-center'
+              )}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {/* Checkbox with animation */}
-              <motion.button
-                onClick={handleToggleComplete}
-                variants={completionVariants}
-                animate={isCompleting ? 'completing' : task.completed ? 'complete' : 'incomplete'}
-                className={cn(
-                  'mt-1 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200',
-                  task.completed
-                    ? 'bg-[var(--success)] border-[var(--success)] text-white'
-                    : 'border-[var(--neutral-400)] hover:border-[var(--primary-500)] hover:bg-[var(--primary-500)]/10'
-                )}
-                aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
-              >
-                <AnimatePresence>
-                  {task.completed && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                    >
-                      <FiCheck className="w-4 h-4" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-
-              {/* Task content */}
-              <div className="flex-1 min-w-0">
-                <h3
+              {/* Checkbox + Content */}
+              <div className={cn(
+                'flex gap-4 flex-1',
+                viewMode === 'grid' ? 'items-start' : 'items-center'
+              )}>
+                {/* Custom Checkbox */}
+                <motion.button
+                  onClick={handleToggleComplete}
                   className={cn(
-                    'font-medium text-base transition-all duration-200',
+                    'relative flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300',
                     task.completed
-                      ? 'line-through text-[var(--muted-foreground)]'
-                      : 'text-[var(--foreground)]'
+                      ? 'bg-gradient-to-r from-teal-500 to-green-500 border-transparent'
+                      : 'border-neutral-500 hover:border-purple-400 hover:bg-purple-500/10',
+                    isCompleting && 'scale-110'
                   )}
+                  whileTap={{ scale: 0.9 }}
                 >
-                  {task.title}
-                </h3>
-                {task.description && (
-                  <p
+                  <AnimatePresence>
+                    {task.completed && (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0, rotate: 180 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                      >
+                        <FiCheck className="w-3.5 h-3.5 text-white" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Ripple effect */}
+                  {isCompleting && (
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-teal-400/50"
+                      initial={{ scale: 1, opacity: 0.5 }}
+                      animate={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  )}
+                </motion.button>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h3
                     className={cn(
-                      'mt-1 text-sm transition-all duration-200',
+                      'font-semibold text-base transition-all duration-300',
                       task.completed
-                        ? 'line-through text-[var(--muted-foreground)]/60'
-                        : 'text-[var(--muted-foreground)]'
+                        ? 'line-through text-neutral-500'
+                        : 'text-white'
                     )}
                   >
-                    {task.description}
-                  </p>
-                )}
+                    {task.title}
+                  </h3>
+                  {task.description && viewMode === 'grid' && (
+                    <p
+                      className={cn(
+                        'mt-1.5 text-sm line-clamp-2 transition-all duration-300',
+                        task.completed
+                          ? 'text-neutral-600'
+                          : 'text-neutral-400'
+                      )}
+                    >
+                      {task.description}
+                    </p>
+                  )}
+
+                  {/* Meta info */}
+                  {viewMode === 'grid' && (
+                    <div className="flex items-center gap-3 mt-3">
+                      {task.created_at && (
+                        <span className="flex items-center gap-1.5 text-xs text-neutral-500">
+                          <FiCalendar className="w-3.5 h-3.5" />
+                          {formatDate(task.created_at)}
+                        </span>
+                      )}
+                      {task.completed && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-teal-500/20 text-teal-400 border border-teal-500/30">
+                          Done
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <motion.button
-                  whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
-                  whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
-                  onClick={() => setIsEditing(true)}
-                  className="p-2 rounded-lg bg-[var(--primary-500)]/10 text-[var(--primary-500)] hover:bg-[var(--primary-500)]/20 transition-colors"
-                  aria-label="Edit task"
-                >
-                  <FiEdit2 className="w-4 h-4" />
-                </motion.button>
-                <motion.button
-                  whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
-                  whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
-                  onClick={handleDelete}
-                  disabled={isLoading}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    isLoading
-                      ? 'bg-[var(--error)]/50 text-[var(--error)]/50 cursor-not-allowed'
-                      : 'bg-[var(--error)]/10 text-[var(--error)] hover:bg-[var(--error)]/20'
-                  )}
-                  aria-label="Delete task"
-                >
-                  {isLoading ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    >
-                      <FiCircle className="w-4 h-4" />
-                    </motion.div>
-                  ) : (
+              {/* Actions */}
+              <div className={cn(
+                'flex items-center gap-2',
+                viewMode === 'grid' ? 'justify-end' : ''
+              )}>
+                {/* Action buttons - always visible on mobile, hover on desktop */}
+                <div className={cn(
+                  'flex items-center gap-1 transition-opacity duration-200',
+                  viewMode === 'grid' ? 'sm:opacity-0 sm:group-hover:opacity-100' : ''
+                )}>
+                  <motion.button
+                    onClick={() => setIsEditing(true)}
+                    className="p-2 rounded-lg text-neutral-400 hover:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Edit task"
+                  >
+                    <FiEdit2 className="w-4 h-4" />
+                  </motion.button>
+                  <motion.button
+                    onClick={handleDelete}
+                    disabled={isLoading}
+                    className="p-2 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Delete task"
+                  >
                     <FiTrash2 className="w-4 h-4" />
-                  )}
-                </motion.button>
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </Card3D>
+      </div>
     </motion.div>
   );
 }

@@ -27,6 +27,16 @@ export const apiClient = {
     });
 
     if (!response.ok) {
+      // Special handling for 401 errors
+      if (response.status === 401) {
+        // Clear invalid token
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
+        }
+        throw new Error('User not found. Please sign up again.');
+      }
+
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
@@ -78,5 +88,3 @@ export const apiClient = {
     });
   },
 };
-
-export { apiClient };

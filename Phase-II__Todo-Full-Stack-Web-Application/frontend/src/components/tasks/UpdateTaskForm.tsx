@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiClient } from '@/lib/api';
+import { apiClient } from '../../lib/api';
 import { Task, TaskUpdate } from '@/types/task';
 import { GradientButton } from '@/components/ui/gradient-button';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
@@ -46,6 +46,7 @@ export default function UpdateTaskForm({ task, onUpdateSuccess, onCancel }: Upda
       onUpdateSuccess(updatedTask);
     } catch (err) {
       setError('Failed to update task');
+      alert('Failed to update task');
       console.error(err);
     } finally {
       setIsLoading(false);

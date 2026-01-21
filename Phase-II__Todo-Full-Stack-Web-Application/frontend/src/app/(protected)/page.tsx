@@ -36,9 +36,9 @@ export default function DashboardPage() {
 
   const fetchTasks = async () => {
     try {
-      const data = await apiClient.get('/tasks');
+      const data: Task[] = await apiClient.get('/tasks');
       setTasks(data);
-      
+
       // Calculate stats
       const total = data.length;
       const completed = data.filter((t: Task) => t.completed).length;

@@ -34,11 +34,11 @@ export const GradientButton = forwardRef<HTMLButtonElement, GradientButtonProps>
 
     const variants = {
       primary:
-        'bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] text-white shadow-lg shadow-[var(--primary-500)]/25 hover:shadow-xl hover:shadow-[var(--primary-500)]/30',
+        'bg-gradient-to-r from-purple-500 via-indigo-500 to-teal-500 text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30',
       secondary:
-        'bg-gradient-to-r from-[var(--secondary-500)] to-pink-500 text-white shadow-lg shadow-[var(--secondary-500)]/25 hover:shadow-xl hover:shadow-[var(--secondary-500)]/30',
+        'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/30',
       outline:
-        'border-2 border-[var(--primary-500)] text-[var(--primary-500)] hover:bg-[var(--primary-500)] hover:text-white',
+        'border-2 border-purple-500/50 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400',
     };
 
     const sizes = {
