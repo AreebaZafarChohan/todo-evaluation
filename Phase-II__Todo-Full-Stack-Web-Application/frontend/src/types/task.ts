@@ -6,6 +6,8 @@ export interface Task {
   description?: string | null;
   completed: boolean;
   user_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface TaskCreate {

@@ -43,10 +43,8 @@ export default function DashboardPage() {
       const total = data.length;
       const completed = data.filter((t: Task) => t.completed).length;
       const pending = total - completed;
-      const overdue = data.filter((t: Task) => {
-        if (t.completed || !t.dueDate) return false;
-        return new Date(t.dueDate) < new Date();
-      }).length;
+      // Note: dueDate feature not yet implemented
+      const overdue = 0;
 
       setStats({ total, completed, pending, overdue });
     } catch (error) {

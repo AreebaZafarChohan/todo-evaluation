@@ -7,7 +7,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { cn } from '@/lib/utils';
 import { FiHome, FiCheckSquare, FiSettings, FiMenu, FiX, FiLogOut } from 'react-icons/fi';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -28,6 +28,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -122,7 +123,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
                   className={cn(
                     'flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors',
                     'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]/50',
-                    router.pathname === item.href && 'text-[var(--primary-500)] bg-[var(--primary-500)]/10'
+                    pathname === item.href && 'text-[var(--primary-500)] bg-[var(--primary-500)]/10'
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
@@ -176,7 +177,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
                 <FiCheckSquare className="text-white" />
               </div>
               <h1 className="text-xl font-bold text-[var(--foreground)] capitalize">
-                {router?.pathname?.split('/')[1] || 'Dashboard'}
+                {pathname?.split('/')[1] || 'Dashboard'}
               </h1>
             </div>
           </div>

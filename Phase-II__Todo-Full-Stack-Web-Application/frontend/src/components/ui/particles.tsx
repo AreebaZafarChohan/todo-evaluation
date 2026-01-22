@@ -34,7 +34,7 @@ export function Particles({
 }: ParticlesProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const prefersReducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
 
