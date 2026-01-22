@@ -15,14 +15,14 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
 # Copy requirements first for better caching
-COPY --chown=user ./requirements.txt requirements.txt
+COPY --chown=user ./backend/requirements.txt requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY --chown=user . /app
+# Copy application code from backend directory
+COPY --chown=user ./backend/src /app/src
 
 # Expose port (Hugging Face Spaces uses port 7860)
 EXPOSE 7860
