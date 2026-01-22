@@ -9,7 +9,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiArrowRight, FiGithub, FiCheck, FiX } from 'react-icons/fi';
 import { AiFillGoogleCircle } from 'react-icons/ai';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || '';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
