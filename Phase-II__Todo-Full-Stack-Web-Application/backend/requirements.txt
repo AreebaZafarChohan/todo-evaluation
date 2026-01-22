@@ -1,10 +1,8 @@
-python-jose[cryptography]
-passlib[bcrypt]
-sqlmodel
 fastapi
 uvicorn[standard]
+sqlmodel
+python-jose[cryptography]
+passlib[bcrypt]
 python-dotenv
 psycopg2-binary
-pytest
 httpx
-sqlmodel
