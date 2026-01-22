@@ -1,5 +1,5 @@
 // Define the base API URL from environment variable
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || '';
+const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_API_URL || '').replace(/\/$/, '');
 
 /**
  * Generic API client for interacting with the backend

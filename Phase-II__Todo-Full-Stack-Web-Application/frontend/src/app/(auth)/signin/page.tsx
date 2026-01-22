@@ -9,7 +9,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiGithub } from 'react-icons/fi';
 import { AiFillGoogleCircle } from 'react-icons/ai';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || '';
+const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_API_URL || '').replace(/\/$/, '');
 
 export default function SigninPage() {
   const [email, setEmail] = useState('');
