@@ -87,7 +87,7 @@ The system sends reminders to the user for tasks with due dates.
 -   **FR-005**: The AI agent MUST use a Gemini model via an OpenAI-compatible API.
 -   **FR-006**: The AI agent MUST support streamed execution.
 -   **FR-007**: The system MUST use MCP tools for task operations (add, list, update, complete, delete).
--   **FR-008**: Conversation state MUST be stored in a database.
+-   **FR-008**: Conversation state MUST be stored in a PostgreSQL database.
 -   **FR-009**: The server MUST remain fully stateless, holding no in-memory state between requests.
 -   **FR-010**: The system MUST schedule and send reminders for tasks with due dates.
 -   **FR-011**: The system MUST use Better Auth for authentication and validate the `user_id` against the JWT.

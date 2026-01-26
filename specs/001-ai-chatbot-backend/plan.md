@@ -26,7 +26,8 @@ The backend for Phase III: AI-Powered Todo Chatbot will provide a stateless chat
     - No database schema design (for this plan)
     - No deployment steps (for this plan)
     - No manual coding (for this plan)
-**Scale/Scope**: Handling individual user conversations with task management for a single user at a time. The system will handle concurrent requests from the same user by processing them sequentially.
+    - Limited to handling individual user conversations with task management for a single user at a time (justification: initial phase focuses on core AI agent and task management functionality, horizontal scaling for multiple simultaneous users will be addressed in future phases).
+**Scale/Scope**: Handling individual user conversations with task management. The system will handle concurrent requests from the same user by processing them sequentially.
 
 ## Constitution Check
 
