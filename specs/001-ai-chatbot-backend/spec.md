@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "You are Spec-Kit Plus acting as a senior AI backend architect. Create a backend specification for Phase III: AI-Powered Todo Chatbot. Scope: - Backend ONLY - Phase III only - Python FastAPI - OpenAI Agents SDK (mandatory) - Gemini LLM used via OpenAI-compatible API - Streaming responses required - Official MCP SDK - Better Auth authentication - Stateless server architecture LLM & Agent Requirements: 1. Use OpenAI Agents SDK for agent orchestration 2. Do NOT use OpenAI-hosted models 3. Use Gemini model (e.g. gemini-2.0-flash) via OpenAI-compatible base_url 4. Use AsyncOpenAI client with custom base_url 5. Agent execution MUST support streaming using: - Runner.run_streamed - RunResultStreaming 6. Streaming events must be captured and forwarded to the client Core Responsibilities: 1. Stateless chat API endpoint: - POST /api/{user_id}/chat - Accepts natural language input - Streams AI responses token-by-token - Returns final response + tool invocation summary 2. AI Agent: - Built using OpenAI Agents SDK - Uses Gemini model via OpenAIChatCompletionsModel - Supports streamed execution - Interprets user intent - Uses MCP tools for task operations - Can chain multiple tools in a single request - Always confirms actions in natural language 3. MCP Server: - Built using Official MCP SDK - Exposes task tools: - add_task - list_tasks - update_task - complete_task - delete_task - Tools are stateless - All persistence via database 4. Conversation Handling: - Conversation state stored in database - Server fetches conversation history per request - User and assistant messages stored - Streaming output also persisted after completion - Server holds NO in-memory state between requests 5. Reminder & Notification Logic: - Tasks may include due_date and priority - Backend schedules reminders: - First notification at 5 hours remaining - Repeated notification every 15 minutes - Reminder logic is backend-only 6. Security: - Better Auth for authentication - user_id validated against JWT - MCP tools require authenticated user Out of Scope: - Frontend UI - Database schema design - Deployment - Manual coding Success Criteria: - Gemini-powered agent streams responses - MCP tools invoked correctly - Conversation resumes after server restart - Server remains fully stateless Remember that when you create specs firstly create a folder in specs folder named phase3 and also in history/prompts you will create a folder named also phase3 then you create subfolders according to your specs"
 
+## Clarifications
+
+### Session 2026-01-26
+
+- Q: How should the `priority` of a task be defined? → A: An integer from 1 to 5.
+- Q: What is the expected behavior when the user's authentication token expires mid-conversation? → A: Return an authentication error and prompt for re-login.
+- Q: What is the expected behavior when the underlying LLM API is unavailable? → A: Return a user-friendly error message (e.g., "Service temporarily unavailable, please try again later").
+- Q: How should the system handle concurrent requests from the same user? → A: Process requests sequentially.
+- Q: How should the system handle malformed input from the user? → A: Return a user-friendly error message with a hint.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Basic Chat Interaction (Priority: P1)
@@ -61,10 +71,10 @@ The system sends reminders to the user for tasks with due dates.
 
 ### Edge Cases
 
--   What happens when the user's authentication token expires mid-conversation?
--   How does the system handle concurrent requests from the same user?
--   What happens if the underlying LLM API is unavailable?
--   How does the system handle malformed input from the user?
+-   When the user's authentication token expires mid-conversation, the system MUST return an authentication error and prompt the user to log in again.
+-   Concurrent requests from the same user MUST be processed sequentially in the order they are received.
+-   When the underlying LLM API is unavailable, the system MUST return a user-friendly error message (e.g., "Service temporarily unavailable, please try again later").
+-   When the user provides malformed input, the system MUST return a user-friendly error message indicating that the input was not understood and provide a hint on the expected input format.
 
 ## Requirements *(mandatory)*
 
@@ -87,7 +97,7 @@ The system sends reminders to the user for tasks with due dates.
 ### Key Entities
 
 -   **User**: Represents a user of the application. Attributes: `user_id`.
--   **Task**: Represents a todo item. Attributes: `task_id`, `user_id`, `description`, `completed`, `due_date`, `priority`.
+-   **Task**: Represents a todo item. Attributes: `task_id`, `user_id`, `description`, `completed`, `due_date`, `priority` (integer from 1 to 5, where 1 is the lowest priority and 5 is the highest).
 -   **Conversation**: Represents a chat history between a user and the chatbot. Attributes: `conversation_id`, `user_id`, `messages`.
 -   **Message**: Represents a single message in a conversation. Attributes: `message_id`, `conversation_id`, `role` (user or assistant), `content`.
 
