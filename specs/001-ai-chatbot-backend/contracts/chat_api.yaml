@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  title: AI-Powered Todo Chatbot API
+  version: 1.0.0
+description: API for interacting with the AI-Powered Todo Chatbot backend.
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message to the chatbot and receive a streaming response
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: string
+          required: true
+          description: Unique identifier of the user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The natural language message from the user
+                  example: "Hello, what tasks do I have today?"
+      responses:
+        '200':
+          description: Streaming response from the chatbot
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-sent events (SSE) for streaming AI responses and tool invocation summaries
+                example: |
+                  event: message
+                  data: {"type": "token", "value": "Hello"}
+
+                  event: message
+                  data: {"type": "token", "value": ","}
+
+                  event: message
+                  data: {"type": "token", "value": " how"}
+
+                  event: message
+                  data: {"type": "token", "value": " can"}
+
+                  event: message
+                  data: {"type": "token", "value": " I"}
+
+                  event: message
+                  data: {"type": "token", "value": " help"}
+
+                  event: message
+                  data: {"type": "token", "value": " you"}
+
+                  event: message
+                  data: {"type": "token", "value": "?"}
+
+                  event: message
+                  data: {"type": "final_response", "value": "Hello, how can I help you?", "tool_summary": [{"tool_name": "list_tasks", "arguments": {"user_id": "123"}}]}
+        '401':
+          description: Unauthorized - User not authenticated
