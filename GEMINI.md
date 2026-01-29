@@ -210,10 +210,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
 
 ## Recent Changes
+- 001-ai-todo-db: Added Python 3.11+ + FastAPI, SQLModel
 - 001-ai-chatbot-backend: Added Python 3.11+ + FastAPI, OpenAI Agents SDK, AsyncOpenAI, SQLModel, Better Auth, Official MCP SDK
 - 002-todo-frontend: Added TypeScript (Next.js 16+, React) + Next.js 16+ (App Router), React, Tailwind CSS, Better Auth (client-side SDK/library), FastAPI (for API communication)
-- 001-backend-jwt-tasks: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 ## Active Technologies
-- Python 3.11+ + FastAPI, OpenAI Agents SDK, AsyncOpenAI, SQLModel, Better Auth, Official MCP SDK (001-ai-chatbot-backend)
-- PostgreSQL (SQLModel will be used for interactions) (001-ai-chatbot-backend)
+- Python 3.11+ + FastAPI, SQLModel (001-ai-todo-db)
+- Neon Serverless PostgreSQL (001-ai-todo-db)

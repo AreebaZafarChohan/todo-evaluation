@@ -7,6 +7,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from src.persistence.models.user import User
+    from src.persistence.models.reminder import Reminder
 
 
 def generate_uuid() -> str:
@@ -47,17 +48,32 @@ class Task(SQLModel, table=True):
     due_date: datetime | None = Field(default=None, index=True)
     priority: int = Field(default=3, ge=1, le=5)
 
-    # Relationship
+    # Relationships
     user: "User" = Relationship(back_populates="tasks")
+    reminders: list["Reminder"] = Relationship(back_populates="task", cascade_delete=True)
 
 
 class TaskCreate(SQLModel):
     """Schema for creating a new task."""
 
-    title: str  # Maps to Phase 2's title field
+    title: str
     description: str | None = None
     due_date: datetime | None = None
     priority: int = 3
+
+
+class TaskRead(SQLModel):
+    """Schema for reading task data."""
+
+    id: str
+    user_id: str
+    title: str | None
+    description: str | None
+    completed: bool
+    created_at: datetime
+    updated_at: datetime | None
+    due_date: datetime | None
+    priority: int
 
 
 class TaskUpdate(SQLModel):
@@ -68,17 +84,3 @@ class TaskUpdate(SQLModel):
     due_date: datetime | None = None
     priority: int | None = None
     completed: bool | None = None
-
-
-class TaskRead(SQLModel):
-    """Schema for reading task data."""
-
-    id: str
-    user_id: str
-    title: str
-    description: str | None
-    completed: bool
-    due_date: datetime | None
-    priority: int
-    created_at: datetime
-    updated_at: datetime
