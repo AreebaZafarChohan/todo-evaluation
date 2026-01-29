@@ -1,0 +1,38 @@
+# Core Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Database (Async)
+sqlmodel==0.0.22
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+greenlet==3.1.1
+
+# AI/LLM - Updated to satisfy openai-agents dependency
+openai>=1.66.5
+openai-agents==0.0.8
+
+# Auth
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Database Migrations
+alembic==1.14.0
+
+# OpenAPI Tools
+python-dotenv==1.0.1
+pydantic-settings==2.6.1
+
+# MCP Server - Version range to satisfy openai-agents dependency
+mcp>=1.6.0,<2.0.0
+
+# Utilities
+httpx==0.28.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# Development type checking
+mypy==1.13.0
