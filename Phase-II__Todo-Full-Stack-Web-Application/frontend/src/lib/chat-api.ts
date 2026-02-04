@@ -1,5 +1,6 @@
 // T011, T012, T022, T038, T039, T040, T041: Chat API client with streaming support
-const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_API_URL || '').replace(/\/$/, '');
+// Use separate URL for chat API (port 8001) vs main backend (Hugging Face)
+const CHAT_BASE_URL = (process.env.NEXT_PUBLIC_CHAT_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || '').replace(/\/$/, '');
 
 export interface ChatRequest {
   conversation_id: string | null;
@@ -51,7 +52,7 @@ export async function sendChatMessage(
     }
 
     // T022: Make request with text/event-stream accept header
-    const response = await fetch(`${BASE_URL}/api/${userId}/chat`, {
+    const response = await fetch(`${CHAT_BASE_URL}/api/${userId}/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
