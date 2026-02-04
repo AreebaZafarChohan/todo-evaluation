@@ -153,7 +153,13 @@ function ChatPageContent() {
   const handleStreamError = useCallback((chatError: ChatError) => {
     setIsTyping(false);
     setIsSending(false);
-    setError(chatError.message);
+
+    // Safely convert error to string
+    const errorMessage = typeof chatError === 'string'
+      ? chatError
+      : chatError?.message || JSON.stringify(chatError) || 'An unknown error occurred';
+
+    setError(errorMessage);
     setCurrentStreamingMessage(null);
 
     // Add error message to chat
@@ -162,7 +168,7 @@ function ChatPageContent() {
       {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: `❌ Error: ${chatError.message}`,
+        content: `❌ Error: ${errorMessage}`,
         timestamp: new Date(),
       },
     ]);
