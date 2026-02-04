@@ -192,11 +192,10 @@ function ChatPageContent() {
       setIsSending(true);
       setIsTyping(true);
 
-      // Send to backend
+      // Send to backend (backend manages conversation internally)
       await sendChatMessage(
         userId,
         {
-          conversation_id: conversationId,
           message: messageText,
         },
         handleStreamEvent,

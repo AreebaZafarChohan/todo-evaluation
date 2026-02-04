@@ -3,7 +3,6 @@
 const CHAT_BASE_URL = (process.env.NEXT_PUBLIC_CHAT_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || '').replace(/\/$/, '');
 
 export interface ChatRequest {
-  conversation_id: string | null;
   message: string;
 }
 
