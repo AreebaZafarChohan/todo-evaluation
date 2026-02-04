@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { cn } from '@/lib/utils';
-import { FiHome, FiCheckSquare, FiSettings, FiMenu, FiX, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiCheckSquare, FiSettings, FiMenu, FiX, FiLogOut, FiMessageSquare } from 'react-icons/fi';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -53,6 +53,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: <FiHome className="w-5 h-5" /> },
     { name: 'Tasks', href: '/tasks', icon: <FiCheckSquare className="w-5 h-5" /> },
+    { name: 'AI Assistant', href: '/chat', icon: <FiMessageSquare className="w-5 h-5" /> },
     { name: 'Settings', href: '/settings', icon: <FiSettings className="w-5 h-5" /> },
   ];
 
