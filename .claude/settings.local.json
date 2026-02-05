@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(pytest:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git merge:*)"
     ]
   }
 }

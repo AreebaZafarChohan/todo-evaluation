@@ -1,21 +1,20 @@
 """Chat API endpoint for the AI-powered todo chatbot - Compatible with Phase 2."""
 import json
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from sse_starlette.sse import EventSourceResponse
 
 from src.api.auth import AuthenticatedUser, validate_user_access
 from src.core.database import get_db
-from src.domain.agent.context import UserContext
-from src.domain.agent.main import create_agent
-from src.domain.agent.streaming import run_agent_streamed
+from src.domain.agent.simple_agent import SimpleTodoAgent
 from src.persistence.repositories.conversation_repository import ConversationRepository
 from src.persistence.repositories.user_repository import UserRepository
 
 router = APIRouter(prefix="/api", tags=["Chat"])
+logger = logging.getLogger(__name__)
 
 
 class ChatRequest(BaseModel):
@@ -47,19 +46,19 @@ class ChatResponse(BaseModel):
 @router.post(
     "/{user_id}/chat",
     summary="Send a message to the chatbot",
-    description="Send a natural language message and receive a streaming response via SSE.",
-    response_class=EventSourceResponse,
+    description="Send a natural language message and receive a JSON response.",
+    response_model=ChatResponse,
 )
 async def chat(
     user_id: str,
     request: ChatRequest,
     current_user: Annotated[AuthenticatedUser, Depends(validate_user_access)],
     db: Annotated[AsyncSession, Depends(get_db)],
-) -> EventSourceResponse:
-    """Handle chat request with streaming response.
+) -> ChatResponse:
+    """Handle chat request with simple JSON response.
 
     This endpoint accepts a user message, processes it through the AI agent,
-    and streams the response token-by-token via Server-Sent Events (SSE).
+    and returns the complete response as JSON.
 
     Args:
         user_id: User ID from URL path
@@ -68,7 +67,7 @@ async def chat(
         db: Database session
 
     Returns:
-        EventSourceResponse with streaming AI response
+        ChatResponse with AI response
 
     Raises:
         HTTPException: If message is empty or processing fails
@@ -94,41 +93,16 @@ async def chat(
     conversation_repo = ConversationRepository(db)
     conversation = await conversation_repo.get_or_create_for_user(user_id)
 
-    # Build conversation history for context
-    history = []
-    messages = await conversation_repo.get_messages(conversation.id)
-    for msg in messages:
-        history.append({
-            "role": msg.role,
-            "content": msg.content,
-        })
+    logger.info(f"Processing chat for user {user_id}, conversation {conversation.id}")
 
-    # Create user context - use 'id' field from Phase 2 User model
-    context = UserContext(
-        user_id=user_id,
-        conversation_id=conversation.id,  # Phase 3 uses 'id'
-        email=current_user.email,
-    )
+    try:
+        # Create simple agent with OpenAI Agents SDK
+        agent = SimpleTodoAgent(user_id)
 
-    # Create agent and run streaming
-    agent = create_agent(context)
-    events_generator = run_agent_streamed(agent, message, context, history)
+        # Run agent and get response
+        response_text = await agent.run(message)
 
-    async def event_stream():
-        """Async generator for SSE events."""
-        final_response = ""
-        tool_summary_json = None
-
-        async for event in events_generator:
-            yield event.to_sse()
-
-            if event.event_type == "final_response":
-                final_response = event.data.get("value", "")
-                tool_summary = event.data.get("tool_summary", [])
-                if tool_summary:
-                    tool_summary_json = json.dumps(tool_summary)
-
-        # Persist messages after streaming completes
+        # Persist messages
         await conversation_repo.add_message(
             conversation_id=conversation.id,
             role="user",
@@ -137,12 +111,30 @@ async def chat(
         await conversation_repo.add_message(
             conversation_id=conversation.id,
             role="assistant",
-            content=final_response,
-            tool_calls=tool_summary_json,
+            content=response_text,
         )
         await db.commit()
 
-    return EventSourceResponse(event_stream())
+        return ChatResponse(response=response_text, tool_summary=[])
+
+    except Exception as e:
+        logger.error(f"Error processing chat for user {user_id}: {e}", exc_info=True)
+
+        # Extract user-friendly error message
+        error_str = str(e)
+        user_message = "An error occurred while processing your request."
+
+        if "429" in error_str or "quota" in error_str.lower() or "rate limit" in error_str.lower():
+            user_message = "The AI service is currently at capacity. Please try again in a few moments."
+        elif "403" in error_str or "api key" in error_str.lower() or "leaked" in error_str.lower():
+            user_message = "There is an issue with the AI service configuration. Please contact support."
+        elif "404" in error_str or "not found" in error_str.lower():
+            user_message = "The requested resource was not found."
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=user_message,
+        )
 
 
 @router.get(

@@ -51,7 +51,9 @@ export async function sendChatMessage(
     }
 
     // T022: Make request with text/event-stream accept header
-    const response = await fetch(`${CHAT_BASE_URL}/api/${userId}/chat`, {
+    const url = `${CHAT_BASE_URL}/api/${userId}/chat`;
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,8 +85,22 @@ export async function sendChatMessage(
 
       // Try to parse error response
       const errorData = await response.json().catch(() => ({}));
+
+      // Extract meaningful error message
+      let errorMessage = `Request failed with status ${response.status}`;
+      if (errorData.detail) {
+        if (typeof errorData.detail === 'string') {
+          errorMessage = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          // Pydantic validation errors
+          errorMessage = errorData.detail.map((err: any) =>
+            `${err.loc?.join('.') || 'field'}: ${err.msg}`
+          ).join(', ');
+        }
+      }
+
       onError({
-        message: errorData.detail || `Request failed with status ${response.status}`,
+        message: errorMessage,
         code: 'API_ERROR',
         statusCode: response.status,
       });
@@ -130,41 +146,56 @@ export async function sendChatMessage(
         // Decode the chunk
         buffer += decoder.decode(value, { stream: true });
 
-        // Process complete events
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        // Process complete SSE events (separated by double newline)
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || ''; // Keep incomplete event in buffer
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.substring(6).trim();
-            if (dataStr === '[DONE]' || !dataStr) {
-              continue;
+        for (const eventBlock of events) {
+          if (!eventBlock.trim()) continue;
+
+          // Parse SSE event block (can have multiple lines: event:, data:, id:, etc.)
+          const lines = eventBlock.split('\n');
+          let eventType = 'message';
+          let eventData = '';
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.substring(7).trim();
+            } else if (line.startsWith('data: ')) {
+              eventData += line.substring(6);
+            }
+          }
+
+          // Skip empty data or [DONE] marker
+          if (!eventData || eventData === '[DONE]') {
+            continue;
+          }
+
+          try {
+            const event: StreamEvent = JSON.parse(eventData);
+
+            // Handle error events
+            if (event.type === 'error') {
+              const errorMessage = event.message || 'An error occurred during processing';
+              const errorCode = event.code || 'STREAM_ERROR';
+              onError({
+                message: errorMessage,
+                code: errorCode,
+              });
+              return;
             }
 
-            try {
-              const event: StreamEvent = JSON.parse(dataStr);
+            // Pass event to handler
+            onEvent(event);
 
-              // Handle error events
-              if (event.type === 'error') {
-                onError({
-                  message: event.message || 'An error occurred during processing',
-                  code: event.code || 'STREAM_ERROR',
-                });
-                return;
-              }
-
-              // Pass event to handler
-              onEvent(event);
-
-              // Check for end event
-              if (event.type === 'end') {
-                onComplete();
-                return;
-              }
-            } catch (parseError) {
-              console.error('Failed to parse SSE event:', parseError, 'Data:', dataStr);
-              // Continue processing other events
+            // Check for end event
+            if (event.type === 'end') {
+              onComplete();
+              return;
             }
+          } catch (parseError) {
+            console.error('Failed to parse SSE event:', parseError, 'Data:', eventData);
+            // Continue processing other events
           }
         }
       }

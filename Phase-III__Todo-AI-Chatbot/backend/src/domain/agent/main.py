@@ -6,7 +6,7 @@ for the AI-powered todo chatbot. Compatible with Phase 2 database schema.
 import json
 from typing import Any
 
-from agents import Agent, ModelSettings, function_tool
+from agents import Agent, ModelSettings, RunConfig, function_tool
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 
 from src.core.config import settings
@@ -40,16 +40,22 @@ When using tools:
 Remember: You are stateless. Each request is independent, but you have access to the user's conversation history for context."""
 
 
-def create_agent_model() -> OpenAIChatCompletionsModel:
-    """Create the Gemini model instance for the agent.
+def create_run_config() -> RunConfig:
+    """Create the RunConfig for Gemini model.
 
     Returns:
-        Configured OpenAIChatCompletionsModel using Gemini via OpenAI-compatible API
+        Configured RunConfig with Gemini model and provider
     """
     client = get_llm_client()
-    return OpenAIChatCompletionsModel(
+    model = OpenAIChatCompletionsModel(
         model=settings.gemini_model,
         openai_client=client,
+    )
+
+    return RunConfig(
+        model=model,
+        model_provider=client,  # type: ignore
+        tracing_disabled=True,  # Disable tracing to avoid duplicate API calls
     )
 
 
@@ -138,8 +144,6 @@ def create_agent(context: UserContext | None = None) -> Agent:
     Returns:
         Configured Agent instance
     """
-    model = create_agent_model()
-
     # Create tools bound to the user context
     tools = []
     if context:
@@ -153,12 +157,7 @@ def create_agent(context: UserContext | None = None) -> Agent:
     return Agent(
         name="TodoAssistant",
         instructions=instructions,
-        model=model,
         tools=tools,
-        model_settings=ModelSettings(
-            temperature=0.7,
-            max_tokens=2048,
-        ),
     )
 
 

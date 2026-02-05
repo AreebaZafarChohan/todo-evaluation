@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Gemini API configuration
     gemini_api_key: str = ""
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-2.5-flash"  # Using experimental model for higher quota
 
     # Better Auth configuration
     better_auth_secret: str = ""

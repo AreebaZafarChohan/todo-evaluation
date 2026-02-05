@@ -16,6 +16,7 @@ from agents.stream_events import (
 )
 
 from src.domain.agent.context import UserContext
+from src.domain.agent.main import create_run_config
 
 
 @dataclass
@@ -85,10 +86,14 @@ async def run_agent_streamed(
     tool_calls_pending: list[dict[str, Any]] = []
 
     try:
+        # Create RunConfig with Gemini model
+        run_config = create_run_config()
+
         # Run the agent with streaming
         result: RunResultStreaming = Runner.run_streamed(
             agent,
             input=input_messages,
+            run_config=run_config,
         )
 
         async for event in result.stream_events():

@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Path, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
@@ -90,14 +90,14 @@ async def get_current_user(
 
 
 async def validate_user_access(
-    path_user_id: str,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user_id: Annotated[str, Path(description="User ID from the URL path")],
 ) -> AuthenticatedUser:
     """Validate that the authenticated user matches the path user_id.
 
     Args:
-        path_user_id: User ID from the URL path
         current_user: Currently authenticated user
+        user_id: User ID from the URL path
 
     Returns:
         AuthenticatedUser if validation passes
@@ -105,7 +105,7 @@ async def validate_user_access(
     Raises:
         HTTPException: If user IDs don't match (403 Forbidden)
     """
-    if current_user.user_id != path_user_id:
+    if current_user.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: user ID mismatch",

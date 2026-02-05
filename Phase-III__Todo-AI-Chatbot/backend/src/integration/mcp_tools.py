@@ -228,9 +228,57 @@ async def list_tasks(
         })
 
 
+async def _find_task_by_content(
+    user_id: str,
+    title: str | None = None,
+    description: str | None = None,
+) -> Any:
+    """Helper to find a task by title or description.
+
+    Args:
+        user_id: ID of the user
+        title: Task title to search for
+        description: Task description to search for
+
+    Returns:
+        Task object if found, None otherwise
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    async with get_session() as session:
+        repo = TaskRepository(session)
+        all_tasks = await repo.get_by_user_id(user_id)
+
+        logger.info(f"Searching for task - title: '{title}', among {len(all_tasks)} tasks")
+
+        # Try exact match first
+        for task in all_tasks:
+            logger.debug(f"Checking task: '{task.title}' (ID: {task.id})")
+            if title and task.title.lower() == title.lower():
+                logger.info(f"Found exact match: {task.title} (ID: {task.id})")
+                return task
+            if description and task.description and task.description.lower() == description.lower():
+                logger.info(f"Found by description: {task.title} (ID: {task.id})")
+                return task
+
+        # Try partial match
+        for task in all_tasks:
+            if title and title.lower() in task.title.lower():
+                logger.info(f"Found partial match: {task.title} (ID: {task.id})")
+                return task
+            if description and task.description and description.lower() in task.description.lower():
+                logger.info(f"Found partial match by desc: {task.title} (ID: {task.id})")
+                return task
+
+        logger.warning(f"No task found matching title: '{title}'")
+        return None
+
+
 async def update_task(
     user_id: str,
-    task_id: str,
+    task_id: str | None = None,
+    old_title: str | None = None,
     title: str | None = None,
     description: str | None = None,
     due_date: str | None = None,
@@ -238,9 +286,12 @@ async def update_task(
 ) -> str:
     """Update an existing task.
 
+    Can find task by ID OR by old title for smarter UX.
+
     Args:
         user_id: ID of the user who owns the task
-        task_id: ID of the task to update
+        task_id: ID of the task to update (optional if old_title provided)
+        old_title: Previous title to find the task (optional if task_id provided)
         title: New task title (optional)
         description: New description (optional)
         due_date: New due date in ISO 8601 format (optional)
@@ -251,6 +302,23 @@ async def update_task(
     """
     async with get_session() as session:
         repo = TaskRepository(session)
+
+        # Find task by title if ID not provided
+        if not task_id and old_title:
+            task_obj = await _find_task_by_content(user_id, title=old_title)
+            if task_obj:
+                task_id = task_obj.id
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Could not find task with title '{old_title}'",
+                })
+
+        if not task_id:
+            return json.dumps({
+                "success": False,
+                "error": "Either task_id or old_title must be provided",
+            })
 
         # Build update data
         update_data = TaskUpdate()
@@ -281,19 +349,41 @@ async def update_task(
 
 async def complete_task(
     user_id: str,
-    task_id: str,
+    task_id: str | None = None,
+    title: str | None = None,
 ) -> str:
     """Mark a task as completed.
 
+    Can find task by ID OR by title for smarter UX.
+
     Args:
         user_id: ID of the user who owns the task
-        task_id: ID of the task to complete
+        task_id: ID of the task to complete (optional if title provided)
+        title: Task title to find and complete (optional if task_id provided)
 
     Returns:
         JSON string with completion status
     """
     async with get_session() as session:
         repo = TaskRepository(session)
+
+        # Find task by title if ID not provided
+        if not task_id and title:
+            task_obj = await _find_task_by_content(user_id, title=title)
+            if task_obj:
+                task_id = task_obj.id
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Could not find task with title '{title}'",
+                })
+
+        if not task_id:
+            return json.dumps({
+                "success": False,
+                "error": "Either task_id or title must be provided",
+            })
+
         task = await repo.complete(task_id, user_id)
         await session.commit()
 
@@ -312,23 +402,53 @@ async def complete_task(
 
 async def delete_task(
     user_id: str,
-    task_id: str,
+    task_id: str | None = None,
+    title: str | None = None,
 ) -> str:
     """Delete a task permanently.
 
+    Can find task by ID OR by title for smarter UX.
+
     Args:
         user_id: ID of the user who owns the task
-        task_id: ID of the task to delete
+        task_id: ID of the task to delete (optional if title provided)
+        title: Task title to find and delete (optional if task_id provided)
 
     Returns:
         JSON string with deletion status
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"delete_task called - user_id: {user_id}, task_id: {task_id}, title: {title}")
+
     async with get_session() as session:
         repo = TaskRepository(session)
+
+        # Find task by title if ID not provided
+        if not task_id and title:
+            logger.info(f"Looking for task by title: '{title}'")
+            task_obj = await _find_task_by_content(user_id, title=title)
+            if task_obj:
+                task_id = task_obj.id
+                logger.info(f"Found task by title: {task_obj.title} (ID: {task_id})")
+            else:
+                logger.warning(f"Could not find task with title '{title}'")
+                return json.dumps({
+                    "success": False,
+                    "error": f"Could not find task with title '{title}'",
+                })
+
+        if not task_id:
+            return json.dumps({
+                "success": False,
+                "error": "Either task_id or title must be provided",
+            })
 
         # Get task first for confirmation message
         task = await repo.get_by_id_and_user(task_id, user_id)
         if task is None:
+            logger.warning(f"Task not found: {task_id}")
             return json.dumps({
                 "success": False,
                 "error": f"Task with ID '{task_id}' not found or access denied",
@@ -337,6 +457,8 @@ async def delete_task(
         task_title = task.title
         deleted = await repo.delete(task_id, user_id)
         await session.commit()
+
+        logger.info(f"Task '{task_title}' (ID: {task_id}) deleted successfully")
 
         return json.dumps({
             "success": True,
