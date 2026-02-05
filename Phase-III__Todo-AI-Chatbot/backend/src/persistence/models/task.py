@@ -50,6 +50,7 @@ class Task(SQLModel, table=True):
 
     # Relationships
     user: "User" = Relationship(back_populates="tasks")
+    # Reminders relationship - enabled after migration created the reminder table
     reminders: list["Reminder"] = Relationship(back_populates="task", cascade_delete=True)
 
 
