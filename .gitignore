@@ -57,5 +57,7 @@ prompts/
 tmp/
 temp/
 
+# Root main.py only
+/main.py
 
 *settings.json
