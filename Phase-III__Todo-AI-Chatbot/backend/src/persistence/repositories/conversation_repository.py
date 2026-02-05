@@ -172,6 +172,29 @@ class ConversationRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    async def clear_messages(self, conversation_id: str) -> bool:
+        """Clear all messages from a conversation (keep the conversation).
+
+        Args:
+            conversation_id: Conversation's unique identifier
+
+        Returns:
+            True if messages cleared, False if conversation not found
+        """
+        conversation = await self.get_by_id(conversation_id)
+        if conversation is None:
+            return False
+
+        # Delete all messages
+        for message in conversation.messages:
+            await self.session.delete(message)
+
+        # Update conversation's updated_at timestamp
+        conversation.updated_at = datetime.now()
+        self.session.add(conversation)
+
+        return True
+
     async def delete_conversation(self, conversation_id: str) -> bool:
         """Delete a conversation and all its messages.
 
@@ -191,3 +214,29 @@ class ConversationRepository:
 
         await self.session.delete(conversation)
         return True
+
+    async def delete_all_for_user(self, user_id: str) -> int:
+        """Delete all conversations and messages for a user.
+
+        Args:
+            user_id: User's unique identifier
+
+        Returns:
+            Number of conversations deleted
+        """
+        conversations = await self.get_by_user_id(user_id)
+        count = 0
+
+        for conversation in conversations:
+            # Get conversation with messages
+            conv_with_messages = await self.get_by_id(conversation.id)
+            if conv_with_messages:
+                # Delete all messages
+                for message in conv_with_messages.messages:
+                    await self.session.delete(message)
+
+                # Delete conversation
+                await self.session.delete(conv_with_messages)
+                count += 1
+
+        return count

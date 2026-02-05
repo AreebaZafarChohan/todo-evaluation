@@ -27,6 +27,10 @@ class ChatRequest(BaseModel):
         description="The natural language message from the user",
         examples=["Hello, what tasks do I have today?"],
     )
+    conversation_id: str | None = Field(
+        None,
+        description="Optional conversation ID to continue existing conversation. If not provided, creates new conversation.",
+    )
 
 
 class ToolSummary(BaseModel):
@@ -40,6 +44,7 @@ class ChatResponse(BaseModel):
     """Response model for non-streaming chat endpoint."""
 
     response: str
+    conversation_id: str
     tool_summary: list[ToolSummary] = []
 
 
@@ -91,7 +96,18 @@ async def chat(
 
     # Get or create conversation
     conversation_repo = ConversationRepository(db)
-    conversation = await conversation_repo.get_or_create_for_user(user_id)
+
+    # If conversation_id provided, use that conversation
+    if request.conversation_id:
+        conversation = await conversation_repo.get_by_id(request.conversation_id)
+        if conversation is None or conversation.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found or access denied",
+            )
+    else:
+        # Create new conversation for new chat
+        conversation = await conversation_repo.create(user_id)
 
     logger.info(f"Processing chat for user {user_id}, conversation {conversation.id}")
 
@@ -115,7 +131,11 @@ async def chat(
         )
         await db.commit()
 
-        return ChatResponse(response=response_text, tool_summary=[])
+        return ChatResponse(
+            response=response_text,
+            conversation_id=conversation.id,
+            tool_summary=[]
+        )
 
     except Exception as e:
         logger.error(f"Error processing chat for user {user_id}: {e}", exc_info=True)
@@ -228,3 +248,138 @@ async def get_conversation(
             for m in conversation.messages
         ],
     }
+
+
+@router.delete(
+    "/{user_id}/conversations/{conversation_id}/messages",
+    summary="Clear chat session",
+    description="Clear all messages from the current conversation (keeps the conversation).",
+)
+async def clear_chat_session(
+    user_id: str,
+    conversation_id: str,
+    current_user: Annotated[AuthenticatedUser, Depends(validate_user_access)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Clear all messages from a conversation.
+
+    Args:
+        user_id: User ID from URL path
+        conversation_id: Conversation ID from URL path
+        current_user: Validated authenticated user
+        db: Database session
+
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException: If conversation not found or unauthorized
+    """
+    conversation_repo = ConversationRepository(db)
+    conversation = await conversation_repo.get_by_id(conversation_id)
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found",
+        )
+
+    if conversation.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    success = await conversation_repo.clear_messages(conversation_id)
+    await db.commit()
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to clear messages",
+        )
+
+    return {"message": "Chat session cleared successfully"}
+
+
+@router.delete(
+    "/{user_id}/conversations/{conversation_id}",
+    summary="Delete a conversation",
+    description="Delete a specific conversation and all its messages.",
+)
+async def delete_conversation(
+    user_id: str,
+    conversation_id: str,
+    current_user: Annotated[AuthenticatedUser, Depends(validate_user_access)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Delete a specific conversation.
+
+    Args:
+        user_id: User ID from URL path
+        conversation_id: Conversation ID from URL path
+        current_user: Validated authenticated user
+        db: Database session
+
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException: If conversation not found or unauthorized
+    """
+    conversation_repo = ConversationRepository(db)
+    conversation = await conversation_repo.get_by_id(conversation_id)
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found",
+        )
+
+    if conversation.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    success = await conversation_repo.delete_conversation(conversation_id)
+    await db.commit()
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete conversation",
+        )
+
+    return {"message": "Conversation deleted successfully"}
+
+
+@router.delete(
+    "/{user_id}/conversations",
+    summary="Clear all history",
+    description="Delete all conversations and messages for the user.",
+)
+async def clear_all_history(
+    user_id: str,
+    current_user: Annotated[AuthenticatedUser, Depends(validate_user_access)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """Delete all conversations for a user.
+
+    Args:
+        user_id: User ID from URL path
+        current_user: Validated authenticated user
+        db: Database session
+
+    Returns:
+        Success message with count of deleted conversations
+    """
+    conversation_repo = ConversationRepository(db)
+    count = await conversation_repo.delete_all_for_user(user_id)
+    await db.commit()
+
+    return {
+        "message": f"Successfully deleted {count} conversation(s)",
+        "deleted_count": count,
+    }
+
