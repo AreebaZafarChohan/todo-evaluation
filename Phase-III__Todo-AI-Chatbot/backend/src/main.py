@@ -65,6 +65,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Phase 2 frontend (Next.js dev)
         "http://localhost:3001",  # Alternative frontend port
+        "https://todo-evaluation.vercel.app",  # Production frontend (Vercel)
         "*",  # Allow all for development - configure for production
     ],
     allow_credentials=True,
