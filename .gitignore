@@ -50,8 +50,9 @@ coverage/
 .cache/
 *.tsbuildinfo
 
-# Claude Code prompts (agents & skills)
+# Claude Code prompts (agents & skills) - but allow history/prompts
 prompts/
+!history/prompts/
 
 # Temporary files
 tmp/

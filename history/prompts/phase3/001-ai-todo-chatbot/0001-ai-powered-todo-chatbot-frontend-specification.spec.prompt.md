@@ -1,0 +1,40 @@
+---
+ID: "0001"
+TITLE: "AI-Powered Todo Chatbot Frontend Specification"
+STAGE: "spec"
+DATE_ISO: "2026-01-29"
+SURFACE: "agent"
+MODEL: "gemini-1.5-flash"
+FEATURE: "001-ai-todo-chatbot"
+BRANCH: "001-ai-todo-chatbot"
+USER: "user"
+COMMAND: "/sp.specify You are Spec-Kit Plus acting as a senior frontend architect. Create a frontend specification for Phase III: AI-Powered Todo Chatbot. Scope: - FRONTEND ONLY - Phase III ONLY - OpenAI ChatKit UI - Next.js (App Router) - MUST be integrated into Phase II existing frontend - NO separate frontend application - Stateless frontend - Communicates with FastAPI backend - Authentication handled via Better Auth - Streaming AI responses supported Integration Requirement (Critical): - The chatbot UI must be embedded inside the existing Phase II Todo frontend - Reuse Phase II layout, auth flow, and user session - Chatbot should appear as: - A dedicated page (e.g. /chat) OR - A panel/modal within the existing app - No duplicate authentication or app shell Goals: - Extend the Phase II Todo app with a conversational AI interface - Allow users to manage tasks using natural language - Stream AI responses in real time - Preserve conversation continuity across sessions - Provide reminders and notifications UX Frontend Requirements: ### Core UI 1. Chat Interface - ChatKit-based conversational UI - Message bubbles for user and assistant - Streaming assistant responses (token-by-token) - Auto-scroll on new messages 2. Conversation Handling - Load previous conversations on page load - Allow resuming an existing conversation - Create new conversation when none exists - Display conversation history 3. Input Behavior - Single text input field - Enter to send - Disable input while agent is responding - Support multiline messages 4. Streaming Support - Render partial assistant responses - Show typing indicator while streaming - Finalize message after stream completes ### API Integration - POST /api/{user_id}/chat - Send conversation_id if available - Attach JWT token to Authorization header - Reuse Phase II API client patterns ### Authentication - Use existing Better Auth session from Phase II - Extract authenticated user_id - Prevent unauthenticated access - Handle 401/403 gracefully ### Task Awareness UI - AI confirmations displayed clearly - Tool actions summarized in chat - Friendly confirmations after task operations ### Notifications & Reminders - Browser notifications for task reminders - Sound alert when: - Task has 5 hours remaining - Every 15 minutes afterward - Permission request UX - Graceful fallback if notifications disabled ### Error Handling - Network failures - Streaming interruptions - Backend errors - User-friendly error messages ### Accessibility & UX - Keyboard navigation - Mobile responsive layout - Visual consistency with Phase II UI - Loading and empty states Out of Scope: - Backend logic - Database logic - Deployment setup - New authentication system Constraints: - Do NOT write actual frontend code - Do NOT create a new frontend app - Must reuse Phase II frontend structure - Stateless frontend Output Format: - Integration approach with Phase II frontend - UI components list - User interaction flows - Streaming behavior description - Error handling strategy - Ready for /sp.plan generation"
+LABELS: ["frontend", "ai", "chatbot", "todo", "specification"]
+LINKS:
+  SPEC: "./specs/001-ai-todo-chatbot/spec.md"
+  TICKET: "null"
+  ADR: "null"
+  PR: "null"
+FILES_YAML:
+  - "specs/001-ai-todo-chatbot/spec.md"
+  - "specs/001-ai-todo-chatbot/checklists/requirements.md"
+TESTS_YAML: []
+OUTCOME: "Successfully created a detailed frontend specification for the AI-Powered Todo Chatbot, including user scenarios, functional requirements, key entities, and success criteria. The specification has been validated against a quality checklist and is ready for planning."
+EVALUATION: "The agent successfully parsed the user's detailed request, generated a concise short name, created a new feature branch, and drafted a comprehensive specification document. All mandatory sections were completed, and the spec was validated against a quality checklist with no remaining clarification markers. The output adheres to the specified format and guidelines."
+---
+# AI-Powered Todo Chatbot Frontend Specification
+
+## Prompt Text
+
+```text
+/sp.specify You are Spec-Kit Plus acting as a senior frontend architect. Create a frontend specification for Phase III: AI-Powered Todo Chatbot. Scope: - FRONTEND ONLY - Phase III ONLY - OpenAI ChatKit UI - Next.js (App Router) - MUST be integrated into Phase II existing frontend - NO separate frontend application - Stateless frontend - Communicates with FastAPI backend - Authentication handled via Better Auth - Streaming AI responses supported Integration Requirement (Critical): - The chatbot UI must be embedded inside the existing Phase II Todo frontend - Reuse Phase II layout, auth flow, and user session - Chatbot should appear as: - A dedicated page (e.g. /chat) OR - A panel/modal within the existing app - No duplicate authentication or app shell Goals: - Extend the Phase II Todo app with a conversational AI interface - Allow users to manage tasks using natural language - Stream AI responses in real time - Preserve conversation continuity across sessions - Provide reminders and notifications UX Frontend Requirements: ### Core UI 1. Chat Interface - ChatKit-based conversational UI - Message bubbles for user and assistant - Streaming assistant responses (token-by-token) - Auto-scroll on new messages 2. Conversation Handling - Load previous conversations on page load - Allow resuming an existing conversation - Create new conversation when none exists - Display conversation history 3. Input Behavior - Single text input field - Enter to send - Disable input while agent is responding - Support multiline messages 4. Streaming Support - Render partial assistant responses - Show typing indicator while streaming - Finalize message after stream completes ### API Integration - POST /api/{user_id}/chat - Send conversation_id if available - Attach JWT token to Authorization header - Reuse Phase II API client patterns ### Authentication - Use existing Better Auth session from Phase II - Extract authenticated user_id - Prevent unauthenticated access - Handle 401/403 gracefully ### Task Awareness UI - AI confirmations displayed clearly - Tool actions summarized in chat - Friendly confirmations after task operations ### Notifications & Reminders - Browser notifications for task reminders - Sound alert when: - Task has 5 hours remaining - Every 15 minutes afterward - Permission request UX - Graceful fallback if notifications disabled ### Error Handling - Network failures - Streaming interruptions - Backend errors - User-friendly error messages ### Accessibility & UX - Keyboard navigation - Mobile responsive layout - Visual consistency with Phase II UI - Loading and empty states Out of Scope: - Backend logic - Database logic - Deployment setup - New authentication system Constraints: - Do NOT write actual frontend code - Do NOT create a new frontend app - Must reuse Phase II frontend structure - Stateless frontend Output Format: - Integration approach with Phase II frontend - UI components list - User interaction flows - Streaming behavior description - Error handling strategy - Ready for /sp.plan generation"
+```
+
+## Response Text
+
+Successfully created a detailed frontend specification for the AI-Powered Todo Chatbot, including user scenarios, functional requirements, key entities, and success criteria. The specification has been validated against a quality checklist and is ready for planning.
+
+**Branch Name**: `001-ai-todo-chatbot`
+**Spec File Path**: `/mnt/d/Gemini_Cli/hackathon/hackathon_2/specs/001-ai-todo-chatbot/spec.md`
+**Checklist Results**: All items passed.
+**Readiness**: Ready for `/sp.plan` generation.
