@@ -17,6 +17,8 @@ interface ConversationSidebarProps {
   onNewChat: () => void;
   onConversationDeleted: () => void;
   refreshTrigger?: number; // Optional prop to trigger refresh
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
 export default function ConversationSidebar({
@@ -25,13 +27,14 @@ export default function ConversationSidebar({
   onNewChat,
   onConversationDeleted,
   refreshTrigger,
+  isOpen,
+  onToggle,
 }: ConversationSidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Fetch conversations on mount and when refreshTrigger changes
   useEffect(() => {
@@ -148,8 +151,8 @@ export default function ConversationSidebar({
             </h3>
           </div>
           <button
-            onClick={() => setIsMobileOpen(false)}
-            className="lg:hidden p-2 hover:bg-[var(--hover-bg)] rounded-lg transition-all"
+            onClick={onToggle}
+            className="p-2 hover:bg-[var(--hover-bg)] rounded-lg transition-all"
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -157,7 +160,7 @@ export default function ConversationSidebar({
         <button
           onClick={() => {
             onNewChat();
-            setIsMobileOpen(false);
+            onToggle();
           }}
           className="w-full px-4 py-3 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] text-white rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 font-medium"
         >
@@ -209,7 +212,7 @@ export default function ConversationSidebar({
                   <button
                     onClick={() => {
                       onSelectConversation(conversation.id);
-                      setIsMobileOpen(false);
+                      onToggle();
                     }}
                     disabled={deletingId === conversation.id}
                     className="w-full p-4 text-left flex items-start space-x-3 disabled:opacity-50 transition-all"
@@ -282,42 +285,30 @@ export default function ConversationSidebar({
   );
 
   return (
-    <>
-      {/* Toggle button - Always visible */}
-      <button
-        onClick={() => setIsMobileOpen(true)}
-        className="fixed top-4 left-4 z-40 p-3 bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white border border-[var(--primary-400)] rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-        title="Open Chat History"
-      >
-        <FiMenu className="w-5 h-5" />
-      </button>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onToggle}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          />
 
-      {/* Collapsible sidebar for all screen sizes */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-            />
-
-            {/* Sidebar */}
-            <motion.div
-              initial={{ x: -300, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -300, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-80 z-50 shadow-2xl"
-            >
-              {sidebarContent}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+          {/* Sidebar */}
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed left-0 top-0 bottom-0 w-80 z-50 shadow-2xl"
+          >
+            {sidebarContent}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

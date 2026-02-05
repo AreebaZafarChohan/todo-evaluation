@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
-import { FiRefreshCw, FiAlertCircle, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { FiRefreshCw, FiAlertCircle, FiTrash2, FiMoreVertical, FiMenu } from 'react-icons/fi';
 import ChatWindow, { Message } from '@/components/chat/ChatWindow';
 import ChatInput from '@/components/chat/ChatInput';
 import ConversationSidebar from '@/components/chat/ConversationSidebar';
@@ -35,6 +35,7 @@ function ChatPageContent() {
   const [showMenu, setShowMenu] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [refreshSidebar, setRefreshSidebar] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Initialize on page load
   useEffect(() => {
@@ -228,6 +229,8 @@ function ChatPageContent() {
         onNewChat={handleNewChat}
         onConversationDeleted={handleConversationDeleted}
         refreshTrigger={refreshSidebar}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
       {/* Main Chat Area */}
@@ -235,16 +238,27 @@ function ChatPageContent() {
         initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex-1 flex flex-col lg:ml-0"
+        className="flex-1 flex flex-col"
       >
         <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-[var(--foreground)] mb-2">
-              AI Todo Assistant
-            </h2>
-            <p className="text-[var(--muted-foreground)]">
-              Manage your tasks using natural language
-            </p>
+          <div className="flex items-center space-x-3">
+            {/* Chat History Toggle Button */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2.5 bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+              title="Chat History"
+            >
+              <FiMenu className="w-5 h-5" />
+            </button>
+
+            <div>
+              <h2 className="text-3xl font-bold text-[var(--foreground)] mb-2">
+                AI Todo Assistant
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                Manage your tasks using natural language
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
