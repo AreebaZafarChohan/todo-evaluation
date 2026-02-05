@@ -1,10 +1,10 @@
 // T008, T009, T013, T014, T015, T016: Base Chat UI component with message list
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
-import { FiUser, FiCpu } from 'react-icons/fi';
+import { FiUser, FiCpu, FiCopy, FiCheck } from 'react-icons/fi';
 import { cn } from '@/lib/utils';
 
 export interface Message {
@@ -114,6 +114,17 @@ function MessageBubble({
   index: number;
 }) {
   const isUser = message.role === 'user';
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
 
   return (
     <motion.div
@@ -175,9 +186,24 @@ function MessageBubble({
           )}
         </div>
 
-        <span className="text-xs text-[var(--muted-foreground)] px-2">
-          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <div className="flex items-center space-x-2 px-2">
+          <span className="text-xs text-[var(--muted-foreground)]">
+            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+
+          {/* Copy button */}
+          <button
+            onClick={handleCopy}
+            className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors p-1 rounded hover:bg-[var(--hover-bg)]"
+            title={isCopied ? 'Copied!' : 'Copy message'}
+          >
+            {isCopied ? (
+              <FiCheck className="w-3.5 h-3.5 text-green-500" />
+            ) : (
+              <FiCopy className="w-3.5 h-3.5" />
+            )}
+          </button>
+        </div>
       </div>
     </motion.div>
   );
